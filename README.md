@@ -67,6 +67,8 @@ PDF-to-Word uses a separately installed Python runtime with PyMuPDF (AGPL v3 or 
 
 ## Development
 
+Built with Tauri 2, Rust, React, TypeScript, and pnpm.
+
 - Install dependencies: `pnpm install`
 - Run the browser UI: `pnpm dev`
 - Run the desktop application: `pnpm tauri dev`
