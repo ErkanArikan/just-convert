@@ -2,6 +2,42 @@
 
 A local-first desktop file manager and file converter for Windows 10 and Windows 11 x64.
 
+## Features
+
+### File Conversion
+
+- **Audio** — Convert between MP3, WAV, FLAC, AAC, M4A, and OGG (single file or folder batch)
+- **Images to PDF** — Combine JPG, PNG, WebP, and TIFF images into a single PDF or one PDF per image
+- **PDF to Images** — Render PDF pages to PNG or JPEG at normal (150 DPI) or high (300 DPI) quality
+- **PDF Tools** — Merge, split, reorder, and rotate PDF pages
+- **Office to PDF** — Convert DOCX, XLSX, and PPTX files via detected LibreOffice (single file or folder batch)
+- **PDF to Word** — Best-effort DOCX conversion for digitally generated PDFs via detected Python + PyMuPDF (single file or folder batch)
+
+### File Management
+
+- Browse local folders with list view, sorting, and filtering
+- Copy, move, rename, create folders, and move files to trash
+- Permanent deletion with explicit confirmation
+
+### Privacy & Safety
+
+- Fully local — no uploads, no network requests, no telemetry
+- Originals are never modified; all outputs are staged and validated before saving
+- Output filename collisions resolved automatically with incrementing suffixes
+
+### Job Queue
+
+- Persistent single-worker queue with cancellation support
+- Active, Failed & Cancelled, and Completed sections with collapsible history
+- Failure entries show the reason (missing dependency, unsupported file, etc.)
+
+### Dependencies & Settings
+
+- FFmpeg and qpdf bundled — work out of the box
+- LibreOffice and Python detected automatically or configured manually in Settings
+- English and Turkish interface
+- Light, dark, and system themes
+
 Licensed under your choice of the [MIT or Apache 2.0 license](LICENSE).
 
 ## Windows v1 Distribution
