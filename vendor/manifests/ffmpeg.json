@@ -1,0 +1,27 @@
+{
+  "component": "FFmpeg",
+  "version": "9.0.1-essentials_build-www.gyan.dev",
+  "distribution": "release-essentials",
+  "license_identifier": "GPL-3.0",
+  "archive": {
+    "file_name": "ffmpeg-9.0.1-essentials_build.zip",
+    "sha256": "fec81ae03971d9dd4be3ebe02e263bd2ec1d789483f931bdba5f5715e65da2e9"
+  },
+  "source": {
+    "distribution_url": "https://www.gyan.dev/ffmpeg/builds/",
+    "official_commit": "bf1b838f2a",
+    "official_commit_url": "https://github.com/FFmpeg/FFmpeg/commit/bf1b838f2a"
+  },
+  "download_date": "2026-09-10",
+  "bundled_files": [
+    {
+      "path": "vendor/ffmpeg/bin/ffmpeg.exe",
+      "sha256": "72a489eccd008c2ec2c0a5856c5c75bc3d8bbfa90166c4566865c246445e6aa3"
+    },
+    {
+      "path": "vendor/ffmpeg/bin/ffprobe.exe",
+      "sha256": "19202b23c0043f15ad1b7bce2344f406fd52bd6efd8f995ce02e7392a1cec52f"
+    }
+  ],
+  "license_file": "docs/licenses/ffmpeg-LICENSE.txt"
+}

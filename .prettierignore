@@ -1,0 +1,8 @@
+dist/
+node_modules/
+src-tauri/target/
+src-tauri/gen/
+vendor/
+docs/licenses/qpdf-NOTICE.md
+docs/licenses/pdfium/**
+pnpm-lock.yaml

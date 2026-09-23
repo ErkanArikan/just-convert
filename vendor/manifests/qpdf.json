@@ -1,0 +1,68 @@
+{
+  "component": "qpdf",
+  "version": "12.4.1-msvc64",
+  "license_identifier": "Apache-2.0",
+  "archive": {
+    "file_name": "qpdf-12.4.1-msvc64.zip",
+    "sha256": "3cd016cd433ef7232e42f4c13348a49cc14907a3c7278ef4f99120593126f7a6"
+  },
+  "source": {
+    "release_url": "https://github.com/qpdf/qpdf/releases/tag/v12.4.1",
+    "download_url": "https://github.com/qpdf/qpdf/releases/download/v12.4.1/qpdf-12.4.1-msvc64.zip",
+    "release_tag": "v12.4.1",
+    "release_commit": "c37f83a"
+  },
+  "download_date": "2026-09-10",
+  "bundled_files": [
+    {
+      "path": "vendor/qpdf/bin/concrt140.dll",
+      "sha256": "54716f0738af891f283d213b5c8d11b25896bb8ee3097d301eae718560cf974e"
+    },
+    {
+      "path": "vendor/qpdf/bin/msvcp140.dll",
+      "sha256": "7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca"
+    },
+    {
+      "path": "vendor/qpdf/bin/msvcp140_1.dll",
+      "sha256": "206c931bf90fdad8816de3b5e2ef80b2bcaa9406c89ecc05fe6fddffe251e982"
+    },
+    {
+      "path": "vendor/qpdf/bin/msvcp140_2.dll",
+      "sha256": "d50d7883f20d1dc6191768d3746f52dd9cac89c346ffaed5be1f110c2f34a838"
+    },
+    {
+      "path": "vendor/qpdf/bin/msvcp140_atomic_wait.dll",
+      "sha256": "3d0cbfaa1bf3eecf5a3f4491d2960ee803cb994f30292c6adc4a07c498f60e2b"
+    },
+    {
+      "path": "vendor/qpdf/bin/msvcp140_codecvt_ids.dll",
+      "sha256": "8a65c7596ef2e6938731f5a1058e7e40145b6d97967cc649231a076b9a608d78"
+    },
+    {
+      "path": "vendor/qpdf/bin/qpdf.exe",
+      "sha256": "57c003e868fb66cd343fd5afb91be8c2277f56434eea8635762499731bf9f60d"
+    },
+    {
+      "path": "vendor/qpdf/bin/qpdf30.dll",
+      "sha256": "36fe5b2023f244e5785d96b8372dba26b75ea51b63adf4d4f1e66ad0aa1c8a61"
+    },
+    {
+      "path": "vendor/qpdf/bin/vcruntime140.dll",
+      "sha256": "d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7"
+    },
+    {
+      "path": "vendor/qpdf/bin/vcruntime140_1.dll",
+      "sha256": "a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e"
+    }
+  ],
+  "license_files": [
+    {
+      "path": "docs/licenses/qpdf-LICENSE.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "docs/licenses/qpdf-NOTICE.md",
+      "sha256": "b207f65a9e5491195ded63b2941199b19a4d30148871f2742c88eae7bfc513a6"
+    }
+  ]
+}

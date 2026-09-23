@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Just Convert",
+  "version": "0.1.0",
+  "identifier": "com.erkan.justconvert",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Just Convert",
+        "width": 1180,
+        "height": 760,
+        "minWidth": 900,
+        "minHeight": 620,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost; style-src 'self' 'unsafe-inline'; font-src 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "resources": {
+      "../vendor/ffmpeg/bin/ffmpeg.exe": "vendor/ffmpeg/bin/ffmpeg.exe",
+      "../vendor/ffmpeg/bin/ffprobe.exe": "vendor/ffmpeg/bin/ffprobe.exe",
+      "../vendor/qpdf/bin/": "vendor/qpdf/bin/",
+      "../vendor/pdfium/bin/": "vendor/pdfium/bin/",
+      "../workers/pdf_to_docx.py": "workers/pdf_to_docx.py"
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

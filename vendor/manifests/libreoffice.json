@@ -1,0 +1,12 @@
+{
+  "component": "LibreOffice",
+  "version": "26.8.0.3",
+  "sourceCommit": "bce0998afefdbc355585ca324285661a2170ba77",
+  "licenseIdentifier": "MPL-2.0",
+  "bundled": false,
+  "sourceUrl": "https://www.libreoffice.org/download/",
+  "licenseUrl": "https://www.libreoffice.org/licenses/",
+  "detectedDate": "2026-09-11",
+  "testedExecutable": "C:/Program Files/LibreOffice/program/soffice.com",
+  "notes": "Runtime-detected external application. The executable and LibreOffice license files are not redistributed by this project."
+}

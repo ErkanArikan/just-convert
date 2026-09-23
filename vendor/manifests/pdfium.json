@@ -1,0 +1,26 @@
+{
+  "component": "PDFium",
+  "version": "152.0.7961.0",
+  "sourceBranch": "chromium/7961",
+  "distributionCommit": "c6529b5",
+  "licenseIdentifier": "MIT AND BSD-3-Clause AND Apache-2.0 AND LicenseRef-PDFium-Third-Party",
+  "bundled": true,
+  "sourceUrl": "https://github.com/bblanchon/pdfium-binaries/releases/tag/chromium%2F7961",
+  "downloadUrl": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7961/pdfium-win-x64.tgz",
+  "downloadDate": "2026-09-11",
+  "archive": {
+    "filename": "pdfium-win-x64.tgz",
+    "sha256": "88276459349b291c41f10422dad0210f007c04d919c8fa56472b6b7c6406adf4"
+  },
+  "runtime": [
+    {
+      "path": "vendor/pdfium/bin/pdfium.dll",
+      "sha256": "d3d9f4b7c9dabe3363f30779c5c3c715c47332749fa590e4b4a2b8b6780cb1c4"
+    }
+  ],
+  "licenseFiles": {
+    "directory": "docs/licenses/pdfium/",
+    "packageLicenseSha256": "8854f4388f1ca13b3ad9baa42e95f5546b4c0b17109c159256d3eca7be39b09b",
+    "notes": "The complete licenses directory from the release archive is reproduced verbatim alongside the package license."
+  }
+}
