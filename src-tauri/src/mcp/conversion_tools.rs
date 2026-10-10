@@ -11,6 +11,7 @@ use crate::{
     application::converter_registry,
     domain::job::{
         AudioFormat, ImageFolderMode, PdfImageFormat, PdfOperation, SpeechModel, TranscriptFormat,
+        VideoFormat, VideoQuality,
     },
 };
 
@@ -179,6 +180,36 @@ pub struct TranscribeRequest {
     pub wait: WaitOptions,
 }
 
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct ConvertVideoRequest {
+    /// Absolute path of a video (MP4, MOV, MKV, WebM, AVI, M4V, MPG, WMV, FLV, 3GP) or animated GIF.
+    pub input_path: String,
+    /// Target format: mp4 (H.264/AAC), webm (VP9/Opus), mov, mkv, or gif (animated).
+    pub format: VideoFormat,
+    /// Compression preset. Defaults to balanced; use small to compress, high to stay near the original.
+    pub quality: Option<VideoQuality>,
+    /// Downscale so the height is at most this many pixels (144-4320); never upscales. Keeps the aspect ratio.
+    pub max_height: Option<u32>,
+    /// Absolute output path with the format's extension. Defaults to the input name next to the input.
+    pub output_path: Option<String>,
+    #[serde(flatten)]
+    pub wait: WaitOptions,
+}
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct ExtractVideoFramesRequest {
+    /// Absolute path of a video file.
+    pub input_path: String,
+    /// Take one frame every this many seconds (1-3600). Defaults to 1.
+    pub interval_seconds: Option<u32>,
+    /// Image format of the frames. Defaults to png.
+    pub format: Option<PdfImageFormat>,
+    /// Absolute output directory. Defaults to the directory containing the video.
+    pub output_directory: Option<String>,
+    #[serde(flatten)]
+    pub wait: WaitOptions,
+}
+
 const DEFAULT_DPI: u16 = 150;
 
 #[tool_router(router = conversion_tools, vis = "pub(super)")]
@@ -232,6 +263,62 @@ impl JustConvertServer {
             )?;
             self.jobs
                 .enqueue_audio(input, output, request.format)
+                .map(|job| vec![job])
+        })();
+        Ok(self.finish(result, request.wait, meta, peer).await)
+    }
+
+    #[tool(
+        description = "Convert or compress a video between MP4, WebM, MOV, MKV, or animated GIF using FFmpeg, with an optional size preset and maximum height.",
+        annotations(destructive_hint = false, open_world_hint = false)
+    )]
+    async fn convert_video(
+        &self,
+        Parameters(request): Parameters<ConvertVideoRequest>,
+        meta: RequestMetaObject,
+        peer: Peer<RoleServer>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let result = (|| {
+            let input = paths::absolute(&request.input_path)?;
+            let output = paths::output_file(
+                request.output_path.as_deref(),
+                &input,
+                "",
+                request.format.extension(),
+            )?;
+            self.jobs
+                .enqueue_video(
+                    input,
+                    output,
+                    request.format,
+                    request.quality.unwrap_or_default(),
+                    request.max_height,
+                )
+                .map(|job| vec![job])
+        })();
+        Ok(self.finish(result, request.wait, meta, peer).await)
+    }
+
+    #[tool(
+        description = "Extract still frames from a video as PNG or JPEG images, one every N seconds, using FFmpeg.",
+        annotations(destructive_hint = false, open_world_hint = false)
+    )]
+    async fn extract_video_frames(
+        &self,
+        Parameters(request): Parameters<ExtractVideoFramesRequest>,
+        meta: RequestMetaObject,
+        peer: Peer<RoleServer>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let result = (|| {
+            let input = paths::absolute(&request.input_path)?;
+            let output = paths::output_directory(request.output_directory.as_deref(), &input)?;
+            self.jobs
+                .enqueue_video_frames(
+                    input,
+                    output,
+                    request.format.unwrap_or(PdfImageFormat::Png),
+                    request.interval_seconds.unwrap_or(1),
+                )
                 .map(|job| vec![job])
         })();
         Ok(self.finish(result, request.wait, meta, peer).await)

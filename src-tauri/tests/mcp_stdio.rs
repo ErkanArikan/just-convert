@@ -123,6 +123,8 @@ fn lists_every_conversion_tool() {
         "list_converters",
         "convert_audio",
         "transcribe",
+        "convert_video",
+        "extract_video_frames",
         "images_to_pdf",
         "pdf_merge",
         "pdf_to_images",
@@ -184,4 +186,74 @@ fn converts_audio_and_returns_the_finished_job() {
     let job = &result["structuredContent"]["jobs"][0];
     assert_eq!(job["status"], "completed", "{result}");
     assert!(files.path().join("silence.flac").is_file());
+}
+
+fn write_test_clip(path: &Path) {
+    let ffmpeg = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../vendor/ffmpeg/bin")
+        .join(format!("ffmpeg{}", std::env::consts::EXE_SUFFIX));
+    let status = Command::new(ffmpeg)
+        .args(["-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i"])
+        .arg("testsrc=size=320x240:rate=15:duration=4")
+        .args(["-pix_fmt", "yuv420p"])
+        .arg(path)
+        .status()
+        .unwrap();
+    assert!(status.success());
+}
+
+#[test]
+fn video_tools_reject_out_of_range_options_as_tool_errors() {
+    let data = tempfile::tempdir().unwrap();
+    let files = tempfile::tempdir().unwrap();
+    let input = files.path().join("clip.mp4");
+    std::fs::write(&input, b"not really a video").unwrap();
+    let mut session = Session::start(data.path());
+
+    let result = session.call(
+        "convert_video",
+        json!({ "input_path": input, "format": "webm", "max_height": 10 }),
+    );
+    assert_eq!(result["isError"], true);
+    assert!(result["structuredContent"]["error"]
+        .as_str()
+        .unwrap()
+        .contains("maximum height"));
+
+    let result = session.call(
+        "extract_video_frames",
+        json!({ "input_path": input, "interval_seconds": 0 }),
+    );
+    assert_eq!(result["isError"], true);
+    assert!(result["structuredContent"]["error"]
+        .as_str()
+        .unwrap()
+        .contains("interval"));
+}
+
+#[test]
+#[ignore = "runs the bundled FFmpeg binary"]
+fn converts_video_and_extracts_frames() {
+    let data = tempfile::tempdir().unwrap();
+    let files = tempfile::tempdir().unwrap();
+    let input = files.path().join("clip.mp4");
+    write_test_clip(&input);
+    let mut session = Session::start(data.path());
+
+    let result = session.call(
+        "convert_video",
+        json!({ "input_path": input, "format": "webm", "quality": "small", "max_height": 144 }),
+    );
+    let job = &result["structuredContent"]["jobs"][0];
+    assert_eq!(job["status"], "completed", "{result}");
+    assert!(files.path().join("clip.webm").is_file());
+
+    let result = session.call(
+        "extract_video_frames",
+        json!({ "input_path": input, "interval_seconds": 2, "format": "jpeg" }),
+    );
+    let job = &result["structuredContent"]["jobs"][0];
+    assert_eq!(job["status"], "completed", "{result}");
+    assert!(files.path().join("clip-frame-001.jpg").is_file());
+    assert!(files.path().join("clip-frame-002.jpg").is_file());
 }

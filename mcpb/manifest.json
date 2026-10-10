@@ -45,6 +45,14 @@
       "name": "convert_audio",
       "description": "Convert audio between MP3, WAV, FLAC, AAC, M4A, and OGG"
     },
+    {
+      "name": "convert_video",
+      "description": "Convert or compress video to MP4, WebM, MOV, MKV, or GIF"
+    },
+    {
+      "name": "extract_video_frames",
+      "description": "Extract still frames from a video"
+    },
     { "name": "images_to_pdf", "description": "Combine images into a PDF" },
     { "name": "pdf_merge", "description": "Merge PDFs" },
     { "name": "pdf_split", "description": "Split a PDF into parts" },
@@ -68,5 +76,5 @@
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"]
   },
-  "keywords": ["convert", "pdf", "audio", "office", "local", "privacy"]
+  "keywords": ["convert", "pdf", "audio", "video", "office", "local", "privacy"]
 }
