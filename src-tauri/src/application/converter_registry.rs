@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use crate::{
-    application::audio_converter,
+    application::{audio_converter, video_converter},
     domain::converter::{ConverterCapability, ConverterCategory, ConverterStatus},
     platform,
 };
@@ -99,6 +99,17 @@ pub fn capabilities_with_dependencies(
             &["mp3", "wav", "flac", "aac", "m4a", "ogg"],
         ),
         ConverterCapability::new(
+            "video",
+            ConverterCategory::Video,
+            "converters.video.title",
+            "converters.video.description",
+            "FFmpeg",
+            ffmpeg_status.clone(),
+            true,
+            video_converter::SUPPORTED_INPUTS,
+            &["mp4", "webm", "mov", "mkv", "gif", "png", "jpg"],
+        ),
+        ConverterCapability::new(
             "speech-to-text",
             ConverterCategory::Audio,
             "converters.speechToText.title",
@@ -147,6 +158,7 @@ mod tests {
             "pdf-tools",
             "pdf-to-images",
             "audio",
+            "video",
             "speech-to-text",
             "office-to-pdf",
             "pdf-to-docx",

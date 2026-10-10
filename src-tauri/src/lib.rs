@@ -68,6 +68,8 @@ pub fn run() {
             commands::jobs::enqueue_pdf_to_docx,
             commands::jobs::enqueue_pdf_folder_to_docx,
             commands::jobs::enqueue_transcription,
+            commands::jobs::enqueue_video_conversion,
+            commands::jobs::enqueue_video_frames,
             commands::jobs::get_pdf_page_count,
             commands::jobs::list_jobs,
             commands::jobs::cancel_job,

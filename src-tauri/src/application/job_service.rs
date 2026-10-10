@@ -19,10 +19,11 @@ use crate::{
         job_queue::JobQueue,
         office_converter, pdf_converter, pdf_docx_converter, pdf_image_converter,
         transcription::{self, Transcription},
+        video_converter::{self, FrameExtraction, VideoConversion},
     },
     domain::job::{
         AudioFormat, ExecutionOutcome, ImageFolderMode, Job, JobError, JobKind, JobStatus,
-        PdfImageFormat, PdfOperation, SpeechModel, TranscriptFormat,
+        PdfImageFormat, PdfOperation, SpeechModel, TranscriptFormat, VideoFormat, VideoQuality,
     },
     platform::PdfToDocxRuntime,
 };
@@ -419,6 +420,81 @@ impl JobService {
             ));
         }
         self.enqueue_batch_jobs(jobs)
+    }
+
+    pub fn enqueue_video(
+        self: &Arc<Self>,
+        input_path: String,
+        output_path: String,
+        format: VideoFormat,
+        quality: VideoQuality,
+        max_height: Option<u32>,
+    ) -> Result<Job, String> {
+        if self.ffmpeg_path.is_none() {
+            return Err("The bundled FFmpeg executable is unavailable".into());
+        }
+        video_converter::validate_conversion(
+            Path::new(&input_path),
+            Path::new(&output_path),
+            format,
+            max_height,
+        )?;
+
+        let now = unix_timestamp();
+        let id = format!("{now}-{}", NEXT_JOB_ID.fetch_add(1, Ordering::Relaxed));
+        let job = Job::queued_video_conversion(
+            id,
+            input_path,
+            output_path,
+            format,
+            quality,
+            max_height,
+            now,
+        );
+        {
+            let mut state = self.state.lock().map_err(|_| "Job queue lock failed")?;
+            state.queue.enqueue(job.clone());
+            state.jobs.push(job.clone());
+            self.persist(&state)?;
+        }
+        self.start_worker_if_needed();
+        Ok(job)
+    }
+
+    pub fn enqueue_video_frames(
+        self: &Arc<Self>,
+        input_path: String,
+        output_directory: String,
+        format: PdfImageFormat,
+        interval_seconds: u32,
+    ) -> Result<Job, String> {
+        if self.ffmpeg_path.is_none() {
+            return Err("The bundled FFmpeg executable is unavailable".into());
+        }
+        video_converter::validate_frames(
+            Path::new(&input_path),
+            Path::new(&output_directory),
+            interval_seconds,
+        )?;
+
+        let now = unix_timestamp();
+        let id = format!("{now}-{}", NEXT_JOB_ID.fetch_add(1, Ordering::Relaxed));
+        let job = Job::queued_video_frames(
+            id,
+            input_path,
+            output_directory,
+            format,
+            interval_seconds,
+            now,
+        );
+        {
+            let mut state = self.state.lock().map_err(|_| "Job queue lock failed")?;
+            state.queue.enqueue(job.clone());
+            state.jobs.push(job.clone());
+            self.persist(&state)?;
+        }
+        self.start_worker_if_needed();
+        Ok(job)
     }
 
     pub fn enqueue_transcription(
@@ -822,6 +898,56 @@ impl JobService {
                         output_path: Path::new(output_path),
                         format: *format,
                         language: language.as_deref(),
+                        job_id: &job.id,
+                    },
+                    cancellation,
+                    |progress| self.update_progress(&job.id, progress),
+                )
+            }
+            JobKind::VideoConversion {
+                input_path,
+                output_path,
+                format,
+                quality,
+                max_height,
+            } => {
+                let ffmpeg_path = self
+                    .ffmpeg_path
+                    .as_deref()
+                    .ok_or("The bundled FFmpeg executable is unavailable")?;
+                video_converter::convert(
+                    VideoConversion {
+                        ffmpeg_path,
+                        ffprobe_path: self.ffprobe_path.as_deref(),
+                        input_path: Path::new(input_path),
+                        output_path: Path::new(output_path),
+                        format: *format,
+                        quality: *quality,
+                        max_height: *max_height,
+                        job_id: &job.id,
+                    },
+                    cancellation,
+                    |progress| self.update_progress(&job.id, progress),
+                )
+            }
+            JobKind::VideoFrames {
+                input_path,
+                output_directory,
+                format,
+                interval_seconds,
+            } => {
+                let ffmpeg_path = self
+                    .ffmpeg_path
+                    .as_deref()
+                    .ok_or("The bundled FFmpeg executable is unavailable")?;
+                video_converter::extract_frames(
+                    FrameExtraction {
+                        ffmpeg_path,
+                        ffprobe_path: self.ffprobe_path.as_deref(),
+                        input_path: Path::new(input_path),
+                        output_directory: Path::new(output_directory),
+                        format: *format,
+                        interval_seconds: *interval_seconds,
                         job_id: &job.id,
                     },
                     cancellation,
