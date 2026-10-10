@@ -16,6 +16,8 @@ import type {
   PdfOperation,
   SpeechModel,
   TranscriptFormat,
+  VideoFormat,
+  VideoQuality,
 } from "../types/jobs";
 
 const browserFallback: AppBootstrap = {
@@ -65,6 +67,17 @@ const browserFallback: AppBootstrap = {
       bundled: true,
       inputExtensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg", "mp4"],
       outputExtensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg"],
+    },
+    {
+      id: "video",
+      category: "video",
+      titleKey: "converters.video.title",
+      descriptionKey: "converters.video.description",
+      engine: "FFmpeg",
+      status: "ready",
+      bundled: true,
+      inputExtensions: ["mp4", "mov", "mkv", "webm", "avi", "m4v", "gif"],
+      outputExtensions: ["mp4", "webm", "mov", "mkv", "gif", "png", "jpg"],
     },
     {
       id: "speech-to-text",
@@ -245,6 +258,46 @@ export async function chooseAudioOutput(
   return typeof selected === "string" ? selected : null;
 }
 
+export async function chooseVideoFile(): Promise<string | null> {
+  requireDesktop();
+  const selected = await open({
+    directory: false,
+    multiple: false,
+    filters: [
+      {
+        name: "Video",
+        extensions: [
+          "mp4",
+          "mov",
+          "mkv",
+          "webm",
+          "avi",
+          "m4v",
+          "mpg",
+          "mpeg",
+          "wmv",
+          "flv",
+          "3gp",
+          "gif",
+        ],
+      },
+    ],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseVideoOutput(
+  defaultPath: string,
+  format: VideoFormat,
+): Promise<string | null> {
+  requireDesktop();
+  const selected = await save({
+    defaultPath,
+    filters: [{ name: format.toUpperCase(), extensions: [format] }],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
 export async function chooseTranscriptOutput(
   defaultPath: string,
   format: TranscriptFormat,
@@ -390,6 +443,38 @@ export async function enqueuePdfFolderToDocx(
   return invoke<ConversionJob[]>("enqueue_pdf_folder_to_docx", {
     inputDirectory,
     outputDirectory,
+  });
+}
+
+export async function enqueueVideoConversion(
+  inputPath: string,
+  outputPath: string,
+  format: VideoFormat,
+  quality: VideoQuality,
+  maxHeight: number | null,
+): Promise<ConversionJob> {
+  requireDesktop();
+  return invoke<ConversionJob>("enqueue_video_conversion", {
+    inputPath,
+    outputPath,
+    format,
+    quality,
+    maxHeight,
+  });
+}
+
+export async function enqueueVideoFrames(
+  inputPath: string,
+  outputDirectory: string,
+  format: "png" | "jpeg",
+  intervalSeconds: number,
+): Promise<ConversionJob> {
+  requireDesktop();
+  return invoke<ConversionJob>("enqueue_video_frames", {
+    inputPath,
+    outputDirectory,
+    format,
+    intervalSeconds,
   });
 }
 

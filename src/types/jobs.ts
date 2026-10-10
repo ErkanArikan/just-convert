@@ -79,6 +79,26 @@ export interface TranscriptionJobKind {
   model: SpeechModel;
 }
 
+export type VideoFormat = "mp4" | "webm" | "mov" | "mkv" | "gif";
+export type VideoQuality = "high" | "balanced" | "small";
+
+export interface VideoConversionJobKind {
+  type: "video_conversion";
+  input_path: string;
+  output_path: string;
+  format: VideoFormat;
+  quality: VideoQuality;
+  max_height: number | null;
+}
+
+export interface VideoFramesJobKind {
+  type: "video_frames";
+  input_path: string;
+  output_directory: string;
+  format: "png" | "jpeg";
+  interval_seconds: number;
+}
+
 export interface ConversionJob {
   id: string;
   jobType:
@@ -88,7 +108,9 @@ export interface ConversionJob {
     | "pdf_to_images"
     | "office_to_pdf"
     | "pdf_to_docx"
-    | "transcription";
+    | "transcription"
+    | "video_conversion"
+    | "video_frames";
   kind:
     | AudioJobKind
     | PdfJobKind
@@ -96,7 +118,9 @@ export interface ConversionJob {
     | PdfToImagesJobKind
     | OfficeToPdfJobKind
     | PdfToDocxJobKind
-    | TranscriptionJobKind;
+    | TranscriptionJobKind
+    | VideoConversionJobKind
+    | VideoFramesJobKind;
   status: JobStatus;
   progress: number;
   createdAt: number;

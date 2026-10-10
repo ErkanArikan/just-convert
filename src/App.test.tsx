@@ -22,7 +22,8 @@ describe("App foundation", () => {
       await screen.findByRole("heading", { name: "Conversion tools" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Convert audio")).toBeInTheDocument();
-    expect(screen.getByText("FFmpeg · Bundled")).toBeInTheDocument();
+    expect(screen.getAllByText("FFmpeg · Bundled")).toHaveLength(2);
+    expect(screen.getByText("Convert video")).toBeInTheDocument();
   });
 
   it("keeps the v1 navigation limited to functional workspaces", async () => {
