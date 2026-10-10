@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use crate::{
-    application::{audio_converter, ocr, video_converter},
+    application::{audio_converter, image_ai, ocr, video_converter},
     domain::converter::{ConverterCapability, ConverterCategory, ConverterStatus},
     platform,
 };
@@ -48,6 +48,11 @@ pub fn capabilities_with_dependencies(
         ConverterStatus::ExternalRequired
     };
     let ocr_status = if platform::find_tessdata(resources().as_deref()).is_some() {
+        ConverterStatus::Ready
+    } else {
+        ConverterStatus::ExternalRequired
+    };
+    let image_ai_status = if platform::find_image_ai_models(resources().as_deref()).is_some() {
         ConverterStatus::Ready
     } else {
         ConverterStatus::ExternalRequired
@@ -102,6 +107,28 @@ pub fn capabilities_with_dependencies(
             true,
             audio_converter::SUPPORTED_INPUTS,
             &["mp3", "wav", "flac", "aac", "m4a", "ogg"],
+        ),
+        ConverterCapability::new(
+            "remove-background",
+            ConverterCategory::Image,
+            "converters.removeBackground.title",
+            "converters.removeBackground.description",
+            "U²-Net",
+            image_ai_status.clone(),
+            true,
+            image_ai::SUPPORTED_INPUTS,
+            &["png"],
+        ),
+        ConverterCapability::new(
+            "upscale-image",
+            ConverterCategory::Image,
+            "converters.upscaleImage.title",
+            "converters.upscaleImage.description",
+            "Real-ESRGAN",
+            image_ai_status,
+            true,
+            image_ai::SUPPORTED_INPUTS,
+            &["png", "jpg"],
         ),
         ConverterCapability::new(
             "video",
@@ -174,6 +201,8 @@ mod tests {
             "pdf-tools",
             "pdf-to-images",
             "audio",
+            "remove-background",
+            "upscale-image",
             "video",
             "ocr",
             "speech-to-text",

@@ -3,6 +3,7 @@ pub mod converter_registry;
 pub mod dependency_service;
 pub mod ffmpeg;
 pub mod file_manager;
+pub mod image_ai;
 pub mod image_converter;
 mod job_history;
 pub mod job_queue;

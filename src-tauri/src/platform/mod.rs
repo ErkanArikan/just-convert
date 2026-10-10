@@ -150,6 +150,17 @@ pub fn find_whisper_model(resource_dir: Option<&Path>) -> Option<PathBuf> {
         .find(|candidate| candidate.is_file())
 }
 
+/// The directory holding the bundled background-removal and upscaling models.
+pub fn find_image_ai_models(resource_dir: Option<&Path>) -> Option<PathBuf> {
+    bundled_candidates(resource_dir, "vendor/image-ai")
+        .into_iter()
+        .find(|directory| {
+            ["u2netp.onnx", "realesr-general-x4v3.onnx"]
+                .iter()
+                .all(|name| directory.join(name).is_file())
+        })
+}
+
 /// The directory holding the bundled `eng`/`tur` models and the PDF font.
 pub fn find_tessdata(resource_dir: Option<&Path>) -> Option<PathBuf> {
     bundled_candidates(resource_dir, "vendor/tesseract/tessdata/eng.traineddata")

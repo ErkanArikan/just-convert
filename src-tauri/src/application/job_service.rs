@@ -15,6 +15,7 @@ use crate::{
     application::{
         audio_converter::{self, AudioConversion},
         dependency_service::DependencyService,
+        image_ai::{self, ImageAiRequest},
         image_converter, job_history,
         job_queue::JobQueue,
         ocr::{self, OcrRequest},
@@ -23,9 +24,9 @@ use crate::{
         video_converter::{self, FrameExtraction, VideoConversion},
     },
     domain::job::{
-        AudioFormat, ExecutionOutcome, ImageFolderMode, Job, JobError, JobKind, JobStatus,
-        OcrFormat, OcrLanguage, PdfImageFormat, PdfOperation, SpeechModel, TranscriptFormat,
-        VideoFormat, VideoQuality,
+        AudioFormat, ExecutionOutcome, ImageAiOperation, ImageFolderMode, Job, JobError, JobKind,
+        JobStatus, OcrFormat, OcrLanguage, PdfImageFormat, PdfOperation, SpeechModel,
+        TranscriptFormat, VideoFormat, VideoQuality,
     },
     platform::PdfToDocxRuntime,
 };
@@ -43,6 +44,7 @@ pub struct EnginePaths {
     pub pdf_to_docx_worker_path: Option<PathBuf>,
     pub whisper_model_path: Option<PathBuf>,
     pub tessdata_path: Option<PathBuf>,
+    pub image_ai_directory: Option<PathBuf>,
     pub dependency_service: Option<Arc<DependencyService>>,
 }
 
@@ -65,6 +67,7 @@ pub struct JobService {
     pdf_to_docx_worker_path: Option<PathBuf>,
     whisper_model_path: Option<PathBuf>,
     tessdata_path: Option<PathBuf>,
+    image_ai_directory: Option<PathBuf>,
     models_directory: PathBuf,
     dependency_service: Option<Arc<DependencyService>>,
 }
@@ -109,6 +112,7 @@ impl JobService {
             pdf_to_docx_worker_path: engines.pdf_to_docx_worker_path,
             whisper_model_path: engines.whisper_model_path,
             tessdata_path: engines.tessdata_path,
+            image_ai_directory: engines.image_ai_directory,
             models_directory: data_directory.join("models"),
             dependency_service: engines.dependency_service,
         };
@@ -492,6 +496,30 @@ impl JobService {
             interval_seconds,
             now,
         );
+        {
+            let mut state = self.state.lock().map_err(|_| "Job queue lock failed")?;
+            state.queue.enqueue(job.clone());
+            state.jobs.push(job.clone());
+            self.persist(&state)?;
+        }
+        self.start_worker_if_needed();
+        Ok(job)
+    }
+
+    pub fn enqueue_image_ai(
+        self: &Arc<Self>,
+        input_path: String,
+        output_path: String,
+        operation: ImageAiOperation,
+    ) -> Result<Job, String> {
+        image_ai::validate_request(Path::new(&input_path), Path::new(&output_path), operation)?;
+        if self.image_ai_directory.is_none() {
+            return Err("The bundled image models are unavailable".into());
+        }
+
+        let now = unix_timestamp();
+        let id = format!("{now}-{}", NEXT_JOB_ID.fetch_add(1, Ordering::Relaxed));
+        let job = Job::queued_image_ai(id, input_path, output_path, operation, now);
         {
             let mut state = self.state.lock().map_err(|_| "Job queue lock failed")?;
             state.queue.enqueue(job.clone());
@@ -936,6 +964,27 @@ impl JobService {
                         output_path: Path::new(output_path),
                         format: *format,
                         language: language.as_deref(),
+                        job_id: &job.id,
+                    },
+                    cancellation,
+                    |progress| self.update_progress(&job.id, progress),
+                )
+            }
+            JobKind::ImageAi {
+                input_path,
+                output_path,
+                operation,
+            } => {
+                let models_directory = self
+                    .image_ai_directory
+                    .as_deref()
+                    .ok_or("The bundled image models are unavailable")?;
+                image_ai::convert(
+                    ImageAiRequest {
+                        models_directory,
+                        input_path: Path::new(input_path),
+                        output_path: Path::new(output_path),
+                        operation: *operation,
                         job_id: &job.id,
                     },
                     cancellation,
