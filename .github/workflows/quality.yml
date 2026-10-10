@@ -36,6 +36,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          prefix-key: v1-portable-ggml
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'
         run: |
