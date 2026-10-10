@@ -7,7 +7,7 @@ use std::{
     },
 };
 
-use image::DynamicImage;
+use image::{DynamicImage, ImageReader};
 use kreuzberg_tesseract::TesseractAPI;
 use lopdf::Document;
 use pdfium_render::prelude::PdfRenderConfig;
@@ -238,7 +238,10 @@ where
     H: FnMut(usize, usize, Page) -> Result<(), String>,
 {
     if !is_pdf(request.input_path) {
-        let decoded = image::open(request.input_path)
+        let decoded = ImageReader::open(request.input_path)
+            .and_then(ImageReader::with_guessed_format)
+            .map_err(|error| format!("The image could not be read: {error}"))?
+            .decode()
             .map_err(|error| format!("The image could not be read: {error}"))?;
         handle(0, 1, page_from_image(decoded, RENDER_DPI as i32, None))?;
         return Ok(true);
