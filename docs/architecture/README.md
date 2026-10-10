@@ -18,3 +18,4 @@ These records capture decisions that are expensive to reverse. Proposed changes 
 | [ADR-012](ADR-012-mcp-server.md)                  | Headless stdio MCP server over the job service      |
 | [ADR-013](ADR-013-macos-and-linux.md)             | macOS and Linux support with self-contained engines |
 | [ADR-014](ADR-014-speech-to-text.md)              | Offline speech-to-text with whisper.cpp             |
+| [ADR-015](ADR-015-video-conversion.md)            | Video conversion with the bundled FFmpeg            |
