@@ -206,7 +206,8 @@ pub fn serve() -> Result<(), String> {
             qpdf_path: platform::find_qpdf(resource_directory.clone()),
             pdfium_path: platform::find_pdfium(resource_directory.clone()),
             dependency_service: Some(Arc::clone(&dependencies)),
-            pdf_to_docx_worker_path: platform::find_pdf_to_docx_worker(resource_directory),
+            pdf_to_docx_worker_path: platform::find_pdf_to_docx_worker(resource_directory.clone()),
+            whisper_model_path: platform::find_whisper_model(resource_directory.as_deref()),
             ..EnginePaths::default()
         },
     )?);

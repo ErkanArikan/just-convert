@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use crate::{
+    application::audio_converter,
     domain::converter::{ConverterCapability, ConverterCategory, ConverterStatus},
     platform,
 };
@@ -35,6 +36,13 @@ pub fn capabilities_with_dependencies(
         ConverterStatus::ExternalRequired
     };
     let pdfium_status = if platform::find_pdfium(resources()).is_some() {
+        ConverterStatus::Ready
+    } else {
+        ConverterStatus::ExternalRequired
+    };
+    let speech_status = if ffmpeg_status == ConverterStatus::Ready
+        && platform::find_whisper_model(resource_directory).is_some()
+    {
         ConverterStatus::Ready
     } else {
         ConverterStatus::ExternalRequired
@@ -85,10 +93,21 @@ pub fn capabilities_with_dependencies(
             "converters.audio.title",
             "converters.audio.description",
             "FFmpeg",
-            ffmpeg_status,
+            ffmpeg_status.clone(),
             true,
+            audio_converter::SUPPORTED_INPUTS,
             &["mp3", "wav", "flac", "aac", "m4a", "ogg"],
-            &["mp3", "wav", "flac", "aac", "m4a", "ogg"],
+        ),
+        ConverterCapability::new(
+            "speech-to-text",
+            ConverterCategory::Audio,
+            "converters.speechToText.title",
+            "converters.speechToText.description",
+            "whisper.cpp",
+            speech_status,
+            true,
+            audio_converter::SUPPORTED_INPUTS,
+            &["txt", "srt", "vtt", "json"],
         ),
         ConverterCapability::new(
             "office-to-pdf",
@@ -128,6 +147,7 @@ mod tests {
             "pdf-tools",
             "pdf-to-images",
             "audio",
+            "speech-to-text",
             "office-to-pdf",
             "pdf-to-docx",
         ] {

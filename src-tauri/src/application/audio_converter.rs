@@ -17,7 +17,9 @@ use crate::{
     platform,
 };
 
-pub const SUPPORTED_INPUTS: &[&str] = &["mp3", "wav", "flac", "aac", "m4a", "ogg"];
+pub const SUPPORTED_INPUTS: &[&str] = &[
+    "mp3", "wav", "flac", "aac", "m4a", "ogg", "mp4", "mov", "mkv", "webm", "avi", "m4v",
+];
 
 pub struct AudioConversion<'a> {
     pub ffmpeg_path: &'a Path,

@@ -50,6 +50,38 @@ impl AudioFormat {
     }
 }
 
+#[cfg_attr(feature = "mcp", derive(schemars::JsonSchema))]
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum TranscriptFormat {
+    Txt,
+    Srt,
+    Vtt,
+    Json,
+}
+
+impl TranscriptFormat {
+    pub fn extension(self) -> &'static str {
+        match self {
+            Self::Txt => "txt",
+            Self::Srt => "srt",
+            Self::Vtt => "vtt",
+            Self::Json => "json",
+        }
+    }
+}
+
+#[cfg_attr(feature = "mcp", derive(schemars::JsonSchema))]
+#[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SpeechModel {
+    /// Bundled multilingual Whisper base model; works offline.
+    #[default]
+    Standard,
+    /// Whisper large-v3-turbo; downloaded once on first use.
+    HighAccuracy,
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(
     tag = "type",
@@ -123,6 +155,13 @@ pub enum JobKind {
     PdfToDocx {
         input_path: String,
         output_path: String,
+    },
+    Transcription {
+        input_path: String,
+        output_path: String,
+        format: TranscriptFormat,
+        language: Option<String>,
+        model: SpeechModel,
     },
 }
 
@@ -268,6 +307,34 @@ impl Job {
             kind: JobKind::PdfToDocx {
                 input_path: input_path.into(),
                 output_path: output_path.into(),
+            },
+            status: JobStatus::Queued,
+            progress: 0,
+            created_at,
+            started_at: None,
+            finished_at: None,
+            error: None,
+        }
+    }
+
+    pub fn queued_transcription(
+        id: impl Into<String>,
+        input_path: impl Into<String>,
+        output_path: impl Into<String>,
+        format: TranscriptFormat,
+        language: Option<String>,
+        model: SpeechModel,
+        created_at: u64,
+    ) -> Self {
+        Self {
+            id: id.into(),
+            job_type: "transcription".into(),
+            kind: JobKind::Transcription {
+                input_path: input_path.into(),
+                output_path: output_path.into(),
+                format,
+                language,
+                model,
             },
             status: JobStatus::Queued,
             progress: 0,

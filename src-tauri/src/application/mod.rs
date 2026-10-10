@@ -10,3 +10,4 @@ pub mod office_converter;
 pub mod pdf_converter;
 pub mod pdf_docx_converter;
 pub mod pdf_image_converter;
+pub mod transcription;

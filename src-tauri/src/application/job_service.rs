@@ -18,10 +18,11 @@ use crate::{
         image_converter, job_history,
         job_queue::JobQueue,
         office_converter, pdf_converter, pdf_docx_converter, pdf_image_converter,
+        transcription::{self, Transcription},
     },
     domain::job::{
         AudioFormat, ExecutionOutcome, ImageFolderMode, Job, JobError, JobKind, JobStatus,
-        PdfImageFormat, PdfOperation,
+        PdfImageFormat, PdfOperation, SpeechModel, TranscriptFormat,
     },
     platform::PdfToDocxRuntime,
 };
@@ -37,6 +38,7 @@ pub struct EnginePaths {
     pub libreoffice_path: Option<PathBuf>,
     pub python_path: Option<PathBuf>,
     pub pdf_to_docx_worker_path: Option<PathBuf>,
+    pub whisper_model_path: Option<PathBuf>,
     pub dependency_service: Option<Arc<DependencyService>>,
 }
 
@@ -57,6 +59,8 @@ pub struct JobService {
     libreoffice_path: Option<PathBuf>,
     python_path: Option<PathBuf>,
     pdf_to_docx_worker_path: Option<PathBuf>,
+    whisper_model_path: Option<PathBuf>,
+    models_directory: PathBuf,
     dependency_service: Option<Arc<DependencyService>>,
 }
 
@@ -98,6 +102,8 @@ impl JobService {
             libreoffice_path: engines.libreoffice_path,
             python_path: engines.python_path,
             pdf_to_docx_worker_path: engines.pdf_to_docx_worker_path,
+            whisper_model_path: engines.whisper_model_path,
+            models_directory: data_directory.join("models"),
             dependency_service: engines.dependency_service,
         };
         {
@@ -413,6 +419,42 @@ impl JobService {
             ));
         }
         self.enqueue_batch_jobs(jobs)
+    }
+
+    pub fn enqueue_transcription(
+        self: &Arc<Self>,
+        input_path: String,
+        output_path: String,
+        format: TranscriptFormat,
+        language: Option<String>,
+        model: SpeechModel,
+    ) -> Result<Job, String> {
+        if self.ffmpeg_path.is_none() {
+            return Err("The bundled FFmpeg executable is unavailable".into());
+        }
+        if model == SpeechModel::Standard && self.whisper_model_path.is_none() {
+            return Err("The bundled speech model is unavailable".into());
+        }
+        let language = language.filter(|value| !value.is_empty() && value != "auto");
+        transcription::validate_request(
+            Path::new(&input_path),
+            Path::new(&output_path),
+            format,
+            language.as_deref(),
+        )?;
+
+        let now = unix_timestamp();
+        let id = format!("{now}-{}", NEXT_JOB_ID.fetch_add(1, Ordering::Relaxed));
+        let job =
+            Job::queued_transcription(id, input_path, output_path, format, language, model, now);
+        {
+            let mut state = self.state.lock().map_err(|_| "Job queue lock failed")?;
+            state.queue.enqueue(job.clone());
+            state.jobs.push(job.clone());
+            self.persist(&state)?;
+        }
+        self.start_worker_if_needed();
+        Ok(job)
     }
 
     pub fn enqueue_pdf_to_docx(
@@ -750,6 +792,42 @@ impl JobService {
                     |progress| self.update_progress(&job.id, progress),
                 )
             }
+            JobKind::Transcription {
+                input_path,
+                output_path,
+                format,
+                language,
+                model,
+            } => {
+                let ffmpeg_path = self
+                    .ffmpeg_path
+                    .as_deref()
+                    .ok_or("The bundled FFmpeg executable is unavailable")?;
+                // A first-use model download fills the first 30% of the job's progress.
+                let Some(model_path) = transcription::ensure_model(
+                    *model,
+                    self.whisper_model_path.as_deref(),
+                    &self.models_directory,
+                    &cancellation,
+                    |progress| self.update_progress(&job.id, model_download_progress(progress)),
+                )?
+                else {
+                    return Ok(ExecutionOutcome::Cancelled);
+                };
+                transcription::convert(
+                    Transcription {
+                        ffmpeg_path,
+                        model_path: &model_path,
+                        input_path: Path::new(input_path),
+                        output_path: Path::new(output_path),
+                        format: *format,
+                        language: language.as_deref(),
+                        job_id: &job.id,
+                    },
+                    cancellation,
+                    |progress| self.update_progress(&job.id, progress),
+                )
+            }
             JobKind::PdfToDocx {
                 input_path,
                 output_path,
@@ -1021,6 +1099,10 @@ fn next_available_directory(
     }
 }
 
+fn model_download_progress(download_percent: u8) -> u8 {
+    (u16::from(download_percent.min(100)) * 3 / 10) as u8
+}
+
 fn is_history_entry(status: &JobStatus) -> bool {
     matches!(
         status,
@@ -1192,6 +1274,13 @@ mod tests {
         assert!(jobs.iter().any(|job| job.id == "active"));
         assert!(!jobs.iter().any(|job| job.id == "failed"));
         assert!(!jobs.iter().any(|job| job.id == "cancelled"));
+    }
+
+    #[test]
+    fn model_download_fills_the_first_thirty_percent() {
+        assert_eq!(model_download_progress(0), 0);
+        assert_eq!(model_download_progress(86), 25);
+        assert_eq!(model_download_progress(100), 30);
     }
 
     #[test]

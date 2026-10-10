@@ -144,6 +144,12 @@ pub fn find_bundled_libreoffice(resource_dir: Option<&Path>) -> Option<PathBuf> 
         .find(|candidate| candidate.is_file())
 }
 
+pub fn find_whisper_model(resource_dir: Option<&Path>) -> Option<PathBuf> {
+    bundled_candidates(resource_dir, "vendor/whisper/ggml-base-q5_1.bin")
+        .into_iter()
+        .find(|candidate| candidate.is_file())
+}
+
 pub fn find_bundled_pdf_to_docx(resource_dir: Option<&Path>) -> Option<PathBuf> {
     let relative = if cfg!(windows) {
         "vendor/pdf-to-docx/pdf-to-docx.exe"

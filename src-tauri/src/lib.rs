@@ -33,7 +33,10 @@ pub fn run() {
                     qpdf_path: platform::find_qpdf(resource_directory.clone()),
                     pdfium_path: platform::find_pdfium(resource_directory.clone()),
                     dependency_service: Some(Arc::clone(&dependencies)),
-                    pdf_to_docx_worker_path: platform::find_pdf_to_docx_worker(resource_directory),
+                    pdf_to_docx_worker_path: platform::find_pdf_to_docx_worker(
+                        resource_directory.clone(),
+                    ),
+                    whisper_model_path: platform::find_whisper_model(resource_directory.as_deref()),
                     ..EnginePaths::default()
                 },
             )?);
@@ -64,6 +67,7 @@ pub fn run() {
             commands::jobs::enqueue_office_folder_to_pdf,
             commands::jobs::enqueue_pdf_to_docx,
             commands::jobs::enqueue_pdf_folder_to_docx,
+            commands::jobs::enqueue_transcription,
             commands::jobs::get_pdf_page_count,
             commands::jobs::list_jobs,
             commands::jobs::cancel_job,

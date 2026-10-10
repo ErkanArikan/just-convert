@@ -9,12 +9,14 @@ use serde_json::json;
 use super::{paths, tool_error, JustConvertServer, WaitOptions};
 use crate::{
     application::converter_registry,
-    domain::job::{AudioFormat, ImageFolderMode, PdfImageFormat, PdfOperation},
+    domain::job::{
+        AudioFormat, ImageFolderMode, PdfImageFormat, PdfOperation, SpeechModel, TranscriptFormat,
+    },
 };
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub struct ConvertAudioRequest {
-    /// Absolute path of an MP3, WAV, FLAC, AAC, M4A, or OGG file.
+    /// Absolute path of an audio file or a video whose audio track should be extracted.
     pub input_path: String,
     /// Target audio format.
     pub format: AudioFormat,
@@ -161,6 +163,22 @@ pub struct FolderRequest {
     pub wait: WaitOptions,
 }
 
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct TranscribeRequest {
+    /// Absolute path of an audio or video file (MP3, WAV, FLAC, AAC, M4A, OGG, MP4, MOV, MKV, WebM, AVI, M4V).
+    pub input_path: String,
+    /// Transcript format: plain text, SRT or WebVTT subtitles, or JSON with timestamps. Defaults to txt.
+    pub format: Option<TranscriptFormat>,
+    /// Spoken language as an ISO 639-1 code such as "en" or "tr". Omit to detect it automatically.
+    pub language: Option<String>,
+    /// Speech model. Defaults to standard.
+    pub model: Option<SpeechModel>,
+    /// Absolute output path with the format's extension. Defaults to the input name next to the input.
+    pub output_path: Option<String>,
+    #[serde(flatten)]
+    pub wait: WaitOptions,
+}
+
 const DEFAULT_DPI: u16 = 150;
 
 #[tool_router(router = conversion_tools, vis = "pub(super)")]
@@ -195,7 +213,7 @@ impl JustConvertServer {
     }
 
     #[tool(
-        description = "Convert one audio file between MP3, WAV, FLAC, AAC, M4A, and OGG using FFmpeg.",
+        description = "Convert an audio file, or extract the audio track of a video (MP4, MOV, MKV, WebM, AVI, M4V), to MP3, WAV, FLAC, AAC, M4A, or OGG using FFmpeg.",
         annotations(destructive_hint = false, open_world_hint = false)
     )]
     async fn convert_audio(
@@ -214,6 +232,38 @@ impl JustConvertServer {
             )?;
             self.jobs
                 .enqueue_audio(input, output, request.format)
+                .map(|job| vec![job])
+        })();
+        Ok(self.finish(result, request.wait, meta, peer).await)
+    }
+
+    #[tool(
+        description = "Transcribe speech from an audio or video file to text or subtitles with Whisper, entirely on this machine.",
+        annotations(destructive_hint = false, open_world_hint = false)
+    )]
+    async fn transcribe(
+        &self,
+        Parameters(request): Parameters<TranscribeRequest>,
+        meta: RequestMetaObject,
+        peer: Peer<RoleServer>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let result = (|| {
+            let format = request.format.unwrap_or(TranscriptFormat::Txt);
+            let input = paths::absolute(&request.input_path)?;
+            let output = paths::output_file(
+                request.output_path.as_deref(),
+                &input,
+                "",
+                format.extension(),
+            )?;
+            self.jobs
+                .enqueue_transcription(
+                    input,
+                    output,
+                    format,
+                    request.language.clone(),
+                    request.model.unwrap_or_default(),
+                )
                 .map(|job| vec![job])
         })();
         Ok(self.finish(result, request.wait, meta, peer).await)

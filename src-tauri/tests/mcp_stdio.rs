@@ -122,6 +122,7 @@ fn lists_every_conversion_tool() {
     for expected in [
         "list_converters",
         "convert_audio",
+        "transcribe",
         "images_to_pdf",
         "pdf_merge",
         "pdf_to_images",
