@@ -8,7 +8,8 @@ Licensed under your choice of the [MIT or Apache 2.0 license](LICENSE).
 
 ### File Conversion
 
-- **Audio** — Convert between MP3, WAV, FLAC, AAC, M4A, and OGG (single file or folder batch)
+- **Audio** — Convert between MP3, WAV, FLAC, AAC, M4A, and OGG, or extract audio from MP4, MOV, MKV, WebM, AVI, and M4V video (single file or folder batch)
+- **Speech to text** — Transcribe audio or video to text, SRT or WebVTT subtitles, or timestamped JSON with Whisper, offline; an optional high-accuracy model downloads once on request
 - **Images to PDF** — Combine JPG, PNG, WebP, and TIFF images into a single PDF or one PDF per image
 - **PDF to Images** — Render PDF pages to PNG or JPEG at normal (150 DPI) or high (300 DPI) quality
 - **PDF Tools** — Merge, split, reorder, and rotate PDF pages
@@ -23,7 +24,7 @@ Licensed under your choice of the [MIT or Apache 2.0 license](LICENSE).
 
 ### Privacy & Safety
 
-- Fully local — no uploads, no network requests, no telemetry
+- Fully local — no uploads, no telemetry, and no network requests except the optional high-accuracy speech model, which downloads once only if you choose it
 - Originals are never modified; all outputs are staged and validated before saving
 - Output filename collisions resolved automatically with incrementing suffixes
 
