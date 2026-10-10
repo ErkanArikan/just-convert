@@ -218,7 +218,7 @@ where
         &samples,
         request.language,
         &cancelled,
-        |progress| report_progress(10 + progress * 85 / 100),
+        |progress| report_progress(transcription_progress(progress)),
     )?
     else {
         return Ok(ExecutionOutcome::Cancelled);
@@ -238,6 +238,11 @@ where
         .map_err(|error| format!("The transcript could not be finalized: {error}"))?;
     report_progress(100);
     Ok(ExecutionOutcome::Completed)
+}
+
+/// Maps Whisper's 0–100 progress onto the 10–95% span between decoding and writing.
+fn transcription_progress(whisper_percent: u8) -> u8 {
+    10 + (u16::from(whisper_percent.min(100)) * 85 / 100) as u8
 }
 
 fn decode(
@@ -502,6 +507,14 @@ mod tests {
                 text: "Goodbye.".into(),
             },
         ]
+    }
+
+    #[test]
+    fn whisper_progress_maps_without_overflow() {
+        assert_eq!(transcription_progress(0), 10);
+        assert_eq!(transcription_progress(50), 52);
+        assert_eq!(transcription_progress(100), 95);
+        assert_eq!(transcription_progress(255), 95);
     }
 
     #[test]
