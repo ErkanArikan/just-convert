@@ -430,15 +430,15 @@ impl JobService {
         quality: VideoQuality,
         max_height: Option<u32>,
     ) -> Result<Job, String> {
-        if self.ffmpeg_path.is_none() {
-            return Err("The bundled FFmpeg executable is unavailable".into());
-        }
         video_converter::validate_conversion(
             Path::new(&input_path),
             Path::new(&output_path),
             format,
             max_height,
         )?;
+        if self.ffmpeg_path.is_none() {
+            return Err("The bundled FFmpeg executable is unavailable".into());
+        }
 
         let now = unix_timestamp();
         let id = format!("{now}-{}", NEXT_JOB_ID.fetch_add(1, Ordering::Relaxed));
@@ -468,14 +468,14 @@ impl JobService {
         format: PdfImageFormat,
         interval_seconds: u32,
     ) -> Result<Job, String> {
-        if self.ffmpeg_path.is_none() {
-            return Err("The bundled FFmpeg executable is unavailable".into());
-        }
         video_converter::validate_frames(
             Path::new(&input_path),
             Path::new(&output_directory),
             interval_seconds,
         )?;
+        if self.ffmpeg_path.is_none() {
+            return Err("The bundled FFmpeg executable is unavailable".into());
+        }
 
         let now = unix_timestamp();
         let id = format!("{now}-{}", NEXT_JOB_ID.fetch_add(1, Ordering::Relaxed));
