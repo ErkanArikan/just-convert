@@ -50,4 +50,5 @@ vendor/qpdf/lib/
 vendor/pdfium/bin/libpdfium.*
 vendor/libreoffice/
 vendor/pdf-to-docx/
+vendor/whisper/
 src-tauri/signing.conf.json

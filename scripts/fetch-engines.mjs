@@ -104,6 +104,8 @@ async function extract(entry, archive, root) {
     case "deb-bundle":
       await extractDebBundle(archive, root);
       return async () => {};
+    case "file":
+      return async () => {};
     case "msi":
       run("msiexec", ["/a", archive, "/qn", `TARGETDIR=${root}`]);
       return async () => {};
@@ -238,6 +240,10 @@ async function fetchEntry(component, entry) {
     try {
       const base = entry.kind === "dmg" ? join(root, "mount") : root;
       for (const file of entry.files) {
+        if (entry.kind === "file") {
+          await install(archive, resolve(projectRoot, file.to));
+          continue;
+        }
         const source = file.locate
           ? await locate(base, file.locate)
           : await resolvePattern(base, file.from);
@@ -268,7 +274,8 @@ for (const name of manifests.sort()) {
   );
   const entries = (manifest.platformArchives ?? []).filter(
     (entry) =>
-      entry.platform === process.platform && entry.arch === process.arch,
+      (entry.platform === "any" || entry.platform === process.platform) &&
+      (entry.arch === "any" || entry.arch === process.arch),
   );
   for (const entry of entries) {
     await fetchEntry(manifest.component, entry);

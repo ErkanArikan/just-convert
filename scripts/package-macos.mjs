@@ -103,6 +103,7 @@ for (const engine of [
   "pdfium/bin/libpdfium.dylib",
   "libreoffice",
   "pdf-to-docx",
+  "whisper",
 ]) {
   await rm(join(vendor, engine), { recursive: true, force: true });
   run("ditto", [resolve(projectRoot, "vendor", engine), join(vendor, engine)]);
