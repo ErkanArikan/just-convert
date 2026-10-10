@@ -4,6 +4,7 @@ import {
   FileAudio,
   FileImage,
   FileOutput,
+  ScanText,
   FileText,
   Files,
   Wrench,
@@ -17,6 +18,7 @@ const icons = {
   "pdf-to-images": Files,
   audio: FileAudio,
   video: Clapperboard,
+  ocr: ScanText,
   "speech-to-text": Captions,
   "office-to-pdf": FileOutput,
   "pdf-to-docx": FileText,
@@ -38,7 +40,7 @@ export function ConverterGrid({
   if (loading) {
     return (
       <div className="converter-grid" aria-label={t("common.loading")}>
-        {Array.from({ length: 8 }, (_, index) => (
+        {Array.from({ length: 9 }, (_, index) => (
           <div className="skeleton" key={index} aria-hidden="true" />
         ))}
       </div>

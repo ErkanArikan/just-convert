@@ -99,6 +99,17 @@ export interface VideoFramesJobKind {
   interval_seconds: number;
 }
 
+export type OcrFormat = "pdf" | "txt";
+export type OcrLanguage = "eng" | "tur";
+
+export interface OcrJobKind {
+  type: "ocr";
+  input_path: string;
+  output_path: string;
+  format: OcrFormat;
+  languages: OcrLanguage[];
+}
+
 export interface ConversionJob {
   id: string;
   jobType:
@@ -110,7 +121,8 @@ export interface ConversionJob {
     | "pdf_to_docx"
     | "transcription"
     | "video_conversion"
-    | "video_frames";
+    | "video_frames"
+    | "ocr";
   kind:
     | AudioJobKind
     | PdfJobKind
@@ -120,7 +132,8 @@ export interface ConversionJob {
     | PdfToDocxJobKind
     | TranscriptionJobKind
     | VideoConversionJobKind
-    | VideoFramesJobKind;
+    | VideoFramesJobKind
+    | OcrJobKind;
   status: JobStatus;
   progress: number;
   createdAt: number;

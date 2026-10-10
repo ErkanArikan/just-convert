@@ -143,6 +143,15 @@ export function JobList({ desktopAvailable }: JobListProps) {
           }),
         };
       }
+      if (job.kind.type === "ocr") {
+        return {
+          output: fileName(job.kind.output_path),
+          detail: t("jobs.ocrDetail", {
+            source: fileName(job.kind.input_path),
+            format: job.kind.format.toUpperCase(),
+          }),
+        };
+      }
       if (job.kind.type === "video_conversion") {
         return {
           output: fileName(job.kind.output_path),

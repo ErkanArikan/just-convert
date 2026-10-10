@@ -79,6 +79,11 @@ export const resources = {
           description:
             "Convert between MP3, WAV, FLAC, AAC, M4A, and OGG, or extract audio from video, with FFmpeg.",
         },
+        ocr: {
+          title: "Recognize text (OCR)",
+          description:
+            "Turn scanned PDFs and images into searchable PDFs or text with Tesseract, in English or Turkish.",
+        },
         video: {
           title: "Convert video",
           description:
@@ -152,6 +157,41 @@ export const resources = {
         adding: "Adding…",
         queued: "Conversion added to the local queue.",
         batchQueued: "{{count}} audio files added to the local queue.",
+        viewJobs: "View jobs",
+      },
+      ocr: {
+        back: "All conversion tools",
+        title: "Recognize text (OCR)",
+        description:
+          "Turn a scanned PDF or an image into a searchable PDF or a text file. Tesseract runs entirely on this computer.",
+        input: {
+          label: "Source file",
+          help: "A scanned PDF, or a PNG, JPG, TIFF, BMP, or WebP image",
+          choose: "Choose file",
+          change: "Change",
+        },
+        language: {
+          label: "Document language",
+          help: "Pick the language the text is written in. For Turkish documents, choose Turkish alone for the best accuracy.",
+          eng: "English",
+          tur: "Turkish",
+          both: "English and Turkish",
+        },
+        format: {
+          label: "Result",
+          help: "A searchable PDF keeps the original pages and adds selectable text.",
+          pdf: "Searchable PDF (.pdf)",
+          txt: "Plain text (.txt)",
+        },
+        output: {
+          label: "Save location",
+          help: "Existing files are never overwritten.",
+          choose: "Choose output",
+        },
+        localNotice: "Runs locally · Documents never leave this computer",
+        convert: "Add to queue",
+        adding: "Adding…",
+        queued: "Text recognition added to the local queue.",
         viewJobs: "View jobs",
       },
       video: {
@@ -498,6 +538,7 @@ export const resources = {
         officeToPdfDetail: "{{source}} · Office to PDF",
         pdfToDocxDetail: "{{source}} · PDF to Word",
         transcriptionDetail: "{{source}} → {{format}} transcript",
+        ocrDetail: "{{source}} → {{format}} (OCR)",
         videoConversionDetail: "{{source}} → {{format}}",
         videoFramesDetail: "{{source}} → frames every {{seconds}} s",
         status: {
@@ -651,6 +692,11 @@ export const resources = {
           description:
             "FFmpeg ile MP3, WAV, FLAC, AAC, M4A ve OGG arasında dönüştürün veya videodan sesi çıkarın.",
         },
+        ocr: {
+          title: "Metin tanı (OCR)",
+          description:
+            "Taranmış PDF ve görselleri Tesseract ile aranabilir PDF'ye veya metne dönüştürün; İngilizce ve Türkçe desteklenir.",
+        },
         video: {
           title: "Video dönüştür",
           description:
@@ -725,6 +771,41 @@ export const resources = {
         queued: "Dönüştürme yerel kuyruğa eklendi.",
         batchQueued: "{{count}} ses dosyası yerel kuyruğa eklendi.",
         viewJobs: "İşlemleri görüntüle",
+      },
+      ocr: {
+        back: "Tüm dönüştürme araçları",
+        title: "Metin tanı (OCR)",
+        description:
+          "Taranmış bir PDF'yi veya görseli aranabilir PDF'ye ya da metin dosyasına dönüştürün. Tesseract tamamen bu bilgisayarda çalışır.",
+        input: {
+          label: "Kaynak dosya",
+          help: "Taranmış PDF veya PNG, JPG, TIFF, BMP ya da WebP görsel",
+          choose: "Dosya seç",
+          change: "Değiştir",
+        },
+        language: {
+          label: "Belge dili",
+          help: "Metnin yazıldığı dili seçin. Türkçe belgelerde en iyi doğruluk için yalnızca Türkçe'yi seçin.",
+          eng: "İngilizce",
+          tur: "Türkçe",
+          both: "İngilizce ve Türkçe",
+        },
+        format: {
+          label: "Sonuç",
+          help: "Aranabilir PDF özgün sayfaları korur ve seçilebilir metin ekler.",
+          pdf: "Aranabilir PDF (.pdf)",
+          txt: "Düz metin (.txt)",
+        },
+        output: {
+          label: "Kayıt konumu",
+          help: "Mevcut dosyaların üzerine asla yazılmaz.",
+          choose: "Çıktıyı seç",
+        },
+        localNotice: "Yerel çalışır · Belgeler bu bilgisayardan çıkmaz",
+        convert: "Kuyruğa ekle",
+        adding: "Ekleniyor…",
+        queued: "Metin tanıma yerel kuyruğa eklendi.",
+        viewJobs: "İşleri görüntüle",
       },
       video: {
         back: "Tüm dönüştürme araçları",
@@ -1076,6 +1157,7 @@ export const resources = {
         officeToPdfDetail: "{{source}} · Office'ten PDF'ye",
         pdfToDocxDetail: "{{source}} · PDF'den Word'e",
         transcriptionDetail: "{{source}} → {{format}} metin",
+        ocrDetail: "{{source}} → {{format}} (OCR)",
         videoConversionDetail: "{{source}} → {{format}}",
         videoFramesDetail: "{{source}} → {{seconds}} sn'de bir kare",
         status: {

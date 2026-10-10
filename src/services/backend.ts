@@ -13,6 +13,8 @@ import type {
 import type {
   AudioFormat,
   ConversionJob,
+  OcrFormat,
+  OcrLanguage,
   PdfOperation,
   SpeechModel,
   TranscriptFormat,
@@ -78,6 +80,26 @@ const browserFallback: AppBootstrap = {
       bundled: true,
       inputExtensions: ["mp4", "mov", "mkv", "webm", "avi", "m4v", "gif"],
       outputExtensions: ["mp4", "webm", "mov", "mkv", "gif", "png", "jpg"],
+    },
+    {
+      id: "ocr",
+      category: "document",
+      titleKey: "converters.ocr.title",
+      descriptionKey: "converters.ocr.description",
+      engine: "Tesseract",
+      status: "ready",
+      bundled: true,
+      inputExtensions: [
+        "pdf",
+        "png",
+        "jpg",
+        "jpeg",
+        "tif",
+        "tiff",
+        "bmp",
+        "webp",
+      ],
+      outputExtensions: ["pdf", "txt"],
     },
     {
       id: "speech-to-text",
@@ -249,6 +271,33 @@ export async function chooseDocxOutput(
 export async function chooseAudioOutput(
   defaultPath: string,
   format: AudioFormat,
+): Promise<string | null> {
+  requireDesktop();
+  const selected = await save({
+    defaultPath,
+    filters: [{ name: format.toUpperCase(), extensions: [format] }],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseOcrFile(): Promise<string | null> {
+  requireDesktop();
+  const selected = await open({
+    directory: false,
+    multiple: false,
+    filters: [
+      {
+        name: "PDF and images",
+        extensions: ["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"],
+      },
+    ],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseOcrOutput(
+  defaultPath: string,
+  format: OcrFormat,
 ): Promise<string | null> {
   requireDesktop();
   const selected = await save({
@@ -443,6 +492,21 @@ export async function enqueuePdfFolderToDocx(
   return invoke<ConversionJob[]>("enqueue_pdf_folder_to_docx", {
     inputDirectory,
     outputDirectory,
+  });
+}
+
+export async function enqueueOcr(
+  inputPath: string,
+  outputPath: string,
+  format: OcrFormat,
+  languages: OcrLanguage[],
+): Promise<ConversionJob> {
+  requireDesktop();
+  return invoke<ConversionJob>("enqueue_ocr", {
+    inputPath,
+    outputPath,
+    format,
+    languages,
   });
 }
 
