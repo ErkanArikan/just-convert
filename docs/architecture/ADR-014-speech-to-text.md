@@ -19,4 +19,4 @@ Users want transcripts and subtitles from recordings and videos without sending 
 
 ## Consequences
 
-Installers grow by about 60 MB, and builds need CMake and libclang, which GitHub's runners provide. Accuracy with the bundled model is moderate; the high-accuracy model is a one-time download. Long recordings hold their decoded samples in memory, about 230 MB per hour of audio.
+Installers grow by about 60 MB, and builds need CMake and libclang, which GitHub's runners provide. whisper.cpp would otherwise optimize for the build machine's CPU, so `.cargo/config.toml` builds a portable engine instead: x86-64-v3 (AVX2, every x86 CPU since 2013) and baseline NEON on ARM64. Accuracy with the bundled model is moderate; the high-accuracy model is a one-time download. Long recordings hold their decoded samples in memory, about 230 MB per hour of audio.
