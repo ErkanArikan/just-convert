@@ -171,6 +171,7 @@ impl JustConvertServer {
     )]
     async fn list_converters(&self) -> Result<CallToolResult, ErrorData> {
         let capabilities = converter_registry::capabilities_with_dependencies(
+            self.dependencies.resource_directory(),
             self.dependencies.libreoffice_path().is_some(),
             self.dependencies.pdf_to_docx_runtime().is_some(),
         );

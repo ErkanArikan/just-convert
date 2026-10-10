@@ -17,7 +17,12 @@ struct Session {
 
 impl Session {
     fn start(data_directory: &Path) -> Self {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_just-convert-mcp"))
+        Self::start_program(env!("CARGO_BIN_EXE_just-convert-mcp"), &[], data_directory)
+    }
+
+    fn start_program(program: &str, args: &[&str], data_directory: &Path) -> Self {
+        let mut child = Command::new(program)
+            .args(args)
             .env("JUST_CONVERT_DATA_DIR", data_directory)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -127,6 +132,21 @@ fn lists_every_conversion_tool() {
     ] {
         assert!(names.contains(&expected.to_string()), "missing {expected}");
     }
+}
+
+#[test]
+fn desktop_app_serves_mcp_with_the_mcp_flag() {
+    let data = tempfile::tempdir().unwrap();
+    let mut session =
+        Session::start_program(env!("CARGO_BIN_EXE_just-convert"), &["--mcp"], data.path());
+
+    let result = session.request("tools/list", json!({}));
+
+    assert!(result["tools"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|tool| tool["name"] == "convert_audio"));
 }
 
 #[test]

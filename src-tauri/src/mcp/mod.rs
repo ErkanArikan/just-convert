@@ -31,6 +31,7 @@ use crate::{
 };
 
 const APP_IDENTIFIER: &str = "com.erkan.justconvert";
+const PRODUCT_NAME: &str = "Just Convert";
 const DEFAULT_WAIT_SECONDS: u64 = 600;
 const MAX_WAIT_SECONDS: u64 = 3600;
 const POLL_INTERVAL: Duration = Duration::from_millis(250);
@@ -167,6 +168,21 @@ fn tool_error(message: impl Into<String>) -> CallToolResult {
     CallToolResult::structured_error(json!({ "error": message.into() }))
 }
 
+/// Locates the app's bundled resources relative to the running executable: next to it on
+/// Windows, in `Contents/Resources` inside a macOS app, and in `lib/<product>` on Linux.
+fn installed_resource_directory() -> Option<PathBuf> {
+    let executable = std::env::current_exe().ok()?;
+    let directory = executable.parent()?;
+    [
+        directory.to_path_buf(),
+        directory.join("../Resources"),
+        directory.join("../lib").join(PRODUCT_NAME),
+    ]
+    .into_iter()
+    .find(|candidate| candidate.join("workers/pdf_to_docx.py").is_file())
+    .or_else(|| Some(directory.to_path_buf()))
+}
+
 /// Runs the MCP server over stdio until the client disconnects.
 pub fn serve() -> Result<(), String> {
     let gui_data_directory = match std::env::var_os("JUST_CONVERT_DATA_DIR") {
@@ -175,9 +191,7 @@ pub fn serve() -> Result<(), String> {
             .ok_or("The application data directory could not be determined")?
             .join(APP_IDENTIFIER),
     };
-    let resource_directory = std::env::current_exe()
-        .ok()
-        .and_then(|path| path.parent().map(PathBuf::from));
+    let resource_directory = installed_resource_directory();
 
     // Engine overrides are shared with the desktop app; job history is kept separate so both can run at once.
     let dependencies = Arc::new(DependencyService::new(

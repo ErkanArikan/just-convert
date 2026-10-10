@@ -52,6 +52,7 @@ panic = "abort"
 strip = true
 
 [features]
+default = ["mcp"]
 mcp = ["dep:rmcp", "dep:tokio", "dep:schemars", "dep:dirs"]
 
 [[bin]]
