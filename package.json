@@ -16,6 +16,7 @@
     "bundle:macos": "node scripts/package-macos.mjs",
     "bundle:linux": "node scripts/package-linux.mjs",
     "bundle:windows": "tauri build --config src-tauri/engines/windows.conf.json",
+    "bundle:mcpb": "node scripts/package-mcpb.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "check:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml --check && cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings && cargo test --manifest-path src-tauri/Cargo.toml --all-features",
