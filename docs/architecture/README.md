@@ -20,3 +20,4 @@ These records capture decisions that are expensive to reverse. Proposed changes 
 | [ADR-014](ADR-014-speech-to-text.md)              | Offline speech-to-text with whisper.cpp             |
 | [ADR-015](ADR-015-video-conversion.md)            | Video conversion with the bundled FFmpeg            |
 | [ADR-016](ADR-016-ocr.md)                         | Offline OCR with Tesseract                          |
+| [ADR-017](ADR-017-image-ai.md)                    | Local image AI with tract                           |
