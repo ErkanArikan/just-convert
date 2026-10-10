@@ -37,7 +37,7 @@ async function sha256File(path) {
   return hash.digest("hex");
 }
 
-async function download(url, destination, expectedSha256) {
+async function downloadOnce(url, destination, expectedSha256) {
   const response = await fetch(url);
   if (!response.ok || !response.body) {
     throw new Error(`Download failed (HTTP ${response.status}): ${url}`);
@@ -48,9 +48,26 @@ async function download(url, destination, expectedSha256) {
   await pipeline(body, createWriteStream(destination));
   const actual = hash.digest("hex");
   if (actual !== expectedSha256) {
-    throw new Error(
+    const error = new Error(
       `Checksum mismatch for ${url}: expected ${expectedSha256}, received ${actual}`,
     );
+    error.permanent = true;
+    throw error;
+  }
+}
+
+// Large downloads occasionally drop mid-stream on CI runners; a checksum mismatch is never retried.
+async function download(url, destination, expectedSha256) {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await downloadOnce(url, destination, expectedSha256);
+    } catch (error) {
+      if (error.permanent || attempt === 4) throw error;
+      console.warn(
+        `Download attempt ${attempt} failed (${error.message}); retrying`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, attempt * 3000));
+    }
   }
 }
 
