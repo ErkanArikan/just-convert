@@ -10,8 +10,8 @@ use super::{paths, tool_error, JustConvertServer, WaitOptions};
 use crate::{
     application::converter_registry,
     domain::job::{
-        AudioFormat, ImageFolderMode, OcrFormat, OcrLanguage, PdfImageFormat, PdfOperation,
-        SpeechModel, TranscriptFormat, VideoFormat, VideoQuality,
+        AudioFormat, ImageAiOperation, ImageFolderMode, OcrFormat, OcrLanguage, PdfImageFormat,
+        PdfOperation, SpeechModel, TranscriptFormat, VideoFormat, VideoQuality,
     },
 };
 
@@ -224,6 +224,28 @@ pub struct OcrRequest {
     pub wait: WaitOptions,
 }
 
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct RemoveBackgroundRequest {
+    /// Absolute path of a PNG, JPG, WebP, BMP, or TIFF image.
+    pub input_path: String,
+    /// Absolute output path ending in .png. Defaults to the input name with "-cutout" next to the input.
+    pub output_path: Option<String>,
+    #[serde(flatten)]
+    pub wait: WaitOptions,
+}
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct UpscaleImageRequest {
+    /// Absolute path of a PNG, JPG, WebP, BMP, or TIFF image of at most 4 megapixels.
+    pub input_path: String,
+    /// Enlargement factor, 2 or 4. Defaults to 4.
+    pub scale: Option<u8>,
+    /// Absolute output path ending in .png or .jpg. Defaults to a PNG named with the factor next to the input.
+    pub output_path: Option<String>,
+    #[serde(flatten)]
+    pub wait: WaitOptions,
+}
+
 const DEFAULT_DPI: u16 = 150;
 
 #[tool_router(router = conversion_tools, vis = "pub(super)")]
@@ -277,6 +299,53 @@ impl JustConvertServer {
             )?;
             self.jobs
                 .enqueue_audio(input, output, request.format)
+                .map(|job| vec![job])
+        })();
+        Ok(self.finish(result, request.wait, meta, peer).await)
+    }
+
+    #[tool(
+        description = "Remove the background from a photo, leaving the main subject on a transparent PNG, with a local U²-Net model.",
+        annotations(destructive_hint = false, open_world_hint = false)
+    )]
+    async fn remove_background(
+        &self,
+        Parameters(request): Parameters<RemoveBackgroundRequest>,
+        meta: RequestMetaObject,
+        peer: Peer<RoleServer>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let result = (|| {
+            let input = paths::absolute(&request.input_path)?;
+            let output =
+                paths::output_file(request.output_path.as_deref(), &input, "-cutout", "png")?;
+            self.jobs
+                .enqueue_image_ai(input, output, ImageAiOperation::RemoveBackground)
+                .map(|job| vec![job])
+        })();
+        Ok(self.finish(result, request.wait, meta, peer).await)
+    }
+
+    #[tool(
+        description = "Enlarge an image 2x or 4x with the Real-ESRGAN super-resolution model, restoring detail, entirely on this machine.",
+        annotations(destructive_hint = false, open_world_hint = false)
+    )]
+    async fn upscale_image(
+        &self,
+        Parameters(request): Parameters<UpscaleImageRequest>,
+        meta: RequestMetaObject,
+        peer: Peer<RoleServer>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let result = (|| {
+            let scale = request.scale.unwrap_or(4);
+            let input = paths::absolute(&request.input_path)?;
+            let output = paths::output_file(
+                request.output_path.as_deref(),
+                &input,
+                &format!("-{scale}x"),
+                "png",
+            )?;
+            self.jobs
+                .enqueue_image_ai(input, output, ImageAiOperation::Upscale { scale })
                 .map(|job| vec![job])
         })();
         Ok(self.finish(result, request.wait, meta, peer).await)

@@ -124,6 +124,8 @@ fn lists_every_conversion_tool() {
         "convert_audio",
         "transcribe",
         "ocr",
+        "remove_background",
+        "upscale_image",
         "convert_video",
         "extract_video_frames",
         "images_to_pdf",
