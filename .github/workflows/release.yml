@@ -60,20 +60,25 @@ jobs:
         include:
           - os: windows-latest
             bundle: pnpm bundle:windows
+            app: src-tauri/target/release/just-convert.exe
             artifacts: src-tauri/target/release/bundle/nsis/*.exe
           - os: macos-latest
             bundle: pnpm bundle:macos
+            app: src-tauri/target/release/bundle/macos/Just Convert.app/Contents/MacOS/just-convert
             artifacts: src-tauri/target/release/bundle/dmg/*.dmg
           - os: macos-15-intel
             bundle: pnpm bundle:macos
+            app: src-tauri/target/release/bundle/macos/Just Convert.app/Contents/MacOS/just-convert
             artifacts: src-tauri/target/release/bundle/dmg/*.dmg
           - os: ubuntu-24.04
             bundle: pnpm bundle:linux
+            app: src-tauri/target/release/just-convert
             artifacts: |
               src-tauri/target/release/bundle/deb/*.deb
               src-tauri/target/release/bundle/appimage/*.AppImage
           - os: ubuntu-24.04-arm
             bundle: pnpm bundle:linux
+            app: src-tauri/target/release/just-convert
             artifacts: |
               src-tauri/target/release/bundle/deb/*.deb
               src-tauri/target/release/bundle/appimage/*.AppImage
@@ -159,6 +164,8 @@ jobs:
           else
             ${{ matrix.bundle }}
           fi
+      - name: Check that the app serves MCP with every engine ready
+        run: node scripts/smoke-mcp.mjs "${{ matrix.app }}" --require-ready
       - uses: actions/upload-artifact@v4
         with:
           name: installers-${{ matrix.os }}
@@ -172,20 +179,30 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      id-token: write
+    env:
+      # Release Please drafts the release; it is published once every installer is attached.
+      AUTO_PUBLISH: ${{ inputs.tag != '' }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - uses: actions/download-artifact@v4
         with:
           pattern: installers-*
           path: dist
           merge-multiple: true
+      - name: Package the MCP bundle
+        run: node scripts/package-mcpb.mjs dist --server-json "$GITHUB_REPOSITORY" "$RELEASE_TAG"
       - name: Write checksums
         working-directory: dist
         run: sha256sum -- * > SHA256SUMS
       - name: Attach installers to the release
         env:
           GH_TOKEN: ${{ github.token }}
-          # Release Please drafts the release; it is published once every installer is attached.
-          AUTO_PUBLISH: ${{ inputs.tag != '' }}
         run: |
           if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
@@ -200,3 +217,11 @@ jobs:
           if [[ "$AUTO_PUBLISH" == true ]]; then
             gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
           fi
+      - name: Publish to the MCP Registry
+        if: env.AUTO_PUBLISH == 'true'
+        run: |
+          curl -fsSL -o mcp-publisher.tar.gz https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz
+          echo "a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc  mcp-publisher.tar.gz" | sha256sum -c -
+          tar -xzf mcp-publisher.tar.gz mcp-publisher
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish
