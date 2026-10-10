@@ -1,6 +1,7 @@
 pub mod audio_converter;
 pub mod converter_registry;
 pub mod dependency_service;
+pub mod ffmpeg;
 pub mod file_manager;
 pub mod image_converter;
 mod job_history;

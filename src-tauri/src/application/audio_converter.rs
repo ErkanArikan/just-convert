@@ -1,20 +1,13 @@
 use std::{
     ffi::OsString,
     fs,
-    io::{BufRead, BufReader, Read},
-    path::{Path, PathBuf},
-    process::Stdio,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc, Arc,
-    },
-    thread,
-    time::Duration,
+    path::Path,
+    sync::{atomic::AtomicBool, Arc},
 };
 
 use crate::{
+    application::ffmpeg,
     domain::job::{AudioFormat, ExecutionOutcome},
-    platform,
 };
 
 pub const SUPPORTED_INPUTS: &[&str] = &[
@@ -83,93 +76,27 @@ where
         return Err("The bundled FFmpeg executable could not be found".into());
     }
 
-    let staged_path = staged_output_path(request.output_path, request.job_id)?;
+    let staged_path = ffmpeg::staged_output_path(request.output_path, request.job_id)?;
     let _ = fs::remove_file(&staged_path);
     let duration = request
         .ffprobe_path
-        .and_then(|path| probe_duration(path, request.input_path));
+        .and_then(|path| ffmpeg::probe_duration(path, request.input_path));
 
     let libvorbis =
-        request.format == AudioFormat::Ogg && has_encoder(request.ffmpeg_path, "libvorbis");
-    let mut command = platform::background_command(request.ffmpeg_path);
-    command
-        .args(build_arguments(
-            request.input_path,
-            &staged_path,
-            request.format,
-            libvorbis,
-        ))
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-
-    let mut child = command
-        .spawn()
-        .map_err(|error| format!("FFmpeg could not be started: {error}"))?;
-    let stdout = child
-        .stdout
-        .take()
-        .ok_or("FFmpeg progress pipe unavailable")?;
-    let stderr = child.stderr.take().ok_or("FFmpeg error pipe unavailable")?;
-    let (progress_tx, progress_rx) = mpsc::channel();
-
-    let progress_thread = thread::spawn(move || {
-        for line in BufReader::new(stdout).lines().map_while(Result::ok) {
-            let _ = progress_tx.send(line);
+        request.format == AudioFormat::Ogg && ffmpeg::has_encoder(request.ffmpeg_path, "libvorbis");
+    let outcome = ffmpeg::run(
+        request.ffmpeg_path,
+        build_arguments(request.input_path, &staged_path, request.format, libvorbis),
+        duration,
+        &cancelled,
+        &mut report_progress,
+    );
+    match outcome {
+        Ok(ExecutionOutcome::Completed) => {}
+        other => {
+            let _ = fs::remove_file(&staged_path);
+            return other;
         }
-    });
-    let error_thread = thread::spawn(move || {
-        let mut message = String::new();
-        let _ = BufReader::new(stderr).read_to_string(&mut message);
-        message
-    });
-
-    let status = loop {
-        for line in progress_rx.try_iter() {
-            if line == "progress=end" {
-                report_progress(100);
-            } else if let (Some(total), Some(value)) = (duration, line.strip_prefix("out_time_us="))
-            {
-                if let Ok(microseconds) = value.parse::<f64>() {
-                    let percent =
-                        ((microseconds / 1_000_000.0) / total * 100.0).clamp(0.0, 99.0) as u8;
-                    report_progress(percent);
-                }
-            }
-        }
-
-        if cancelled.load(Ordering::Relaxed) {
-            let _ = child.kill();
-            let _ = child.wait();
-            break None;
-        }
-        match child.try_wait() {
-            Ok(Some(status)) => break Some(status),
-            Ok(None) => thread::sleep(Duration::from_millis(60)),
-            Err(error) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                let _ = fs::remove_file(&staged_path);
-                return Err(format!("FFmpeg process monitoring failed: {error}"));
-            }
-        }
-    };
-
-    let _ = progress_thread.join();
-    let error_message = error_thread.join().unwrap_or_default();
-
-    let Some(status) = status else {
-        let _ = fs::remove_file(staged_path);
-        return Ok(ExecutionOutcome::Cancelled);
-    };
-    if !status.success() {
-        let _ = fs::remove_file(staged_path);
-        let detail = error_message.trim();
-        return Err(if detail.is_empty() {
-            format!("FFmpeg exited with status {status}")
-        } else {
-            format!("FFmpeg conversion failed: {detail}")
-        });
     }
     if fs::metadata(&staged_path).map_or(true, |metadata| metadata.len() == 0) {
         let _ = fs::remove_file(staged_path);
@@ -188,21 +115,6 @@ fn extension(path: &Path) -> Option<String> {
         .map(str::to_ascii_lowercase)
 }
 
-fn staged_output_path(output_path: &Path, job_id: &str) -> Result<PathBuf, String> {
-    let parent = output_path
-        .parent()
-        .ok_or("Output directory is unavailable")?;
-    let stem = output_path
-        .file_stem()
-        .and_then(|value| value.to_str())
-        .ok_or("Output filename is invalid")?;
-    let extension = output_path
-        .extension()
-        .and_then(|value| value.to_str())
-        .ok_or("Output extension is invalid")?;
-    Ok(parent.join(format!(".{stem}.{job_id}.part.{extension}")))
-}
-
 // Homebrew and some distro FFmpeg builds lack libvorbis; the built-in encoder is experimental and stereo-only.
 fn codec_arguments(format: AudioFormat, libvorbis: bool) -> &'static [&'static str] {
     match format {
@@ -215,72 +127,22 @@ fn codec_arguments(format: AudioFormat, libvorbis: bool) -> &'static [&'static s
     }
 }
 
-fn has_encoder(ffmpeg: &Path, name: &str) -> bool {
-    platform::background_command(ffmpeg)
-        .args(["-hide_banner", "-encoders"])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()
-        .ok()
-        .filter(|output| output.status.success())
-        .is_some_and(|output| {
-            String::from_utf8_lossy(&output.stdout)
-                .lines()
-                .any(|line| line.split_whitespace().nth(1) == Some(name))
-        })
-}
-
 fn build_arguments(
     input: &Path,
     output: &Path,
     format: AudioFormat,
     libvorbis: bool,
 ) -> Vec<OsString> {
-    let mut arguments: Vec<OsString> = [
-        OsString::from("-hide_banner"),
-        OsString::from("-loglevel"),
-        OsString::from("error"),
-        OsString::from("-nostdin"),
-        OsString::from("-n"),
-        OsString::from("-i"),
-        input.as_os_str().to_owned(),
-        OsString::from("-map_metadata"),
-        OsString::from("0"),
-        OsString::from("-vn"),
-    ]
-    .into();
+    let mut arguments = ffmpeg::base_arguments(input);
+    arguments.extend(["-map_metadata", "0", "-vn"].map(OsString::from));
     arguments.extend(
         codec_arguments(format, libvorbis)
             .iter()
             .map(OsString::from),
     );
-    arguments.extend([
-        OsString::from("-progress"),
-        OsString::from("pipe:1"),
-        OsString::from("-nostats"),
-        output.as_os_str().to_owned(),
-    ]);
+    arguments.extend(ffmpeg::progress_arguments());
+    arguments.push(output.as_os_str().to_owned());
     arguments
-}
-
-fn probe_duration(ffprobe: &Path, input: &Path) -> Option<f64> {
-    let output = platform::background_command(ffprobe)
-        .args([
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=noprint_wrappers=1:nokey=1",
-        ])
-        .arg(input)
-        .stdin(Stdio::null())
-        .output()
-        .ok()?;
-    if !output.status.success() {
-        return None;
-    }
-    String::from_utf8(output.stdout).ok()?.trim().parse().ok()
 }
 
 #[cfg(test)]
@@ -354,15 +216,6 @@ mod tests {
 
         let error = validate_request(&input, &output, AudioFormat::Mp3).unwrap_err();
         assert!(error.contains("already exists"));
-    }
-
-    #[test]
-    fn staging_keeps_the_real_output_extension() {
-        let output = Path::new("C:/audio/output.ogg");
-        assert_eq!(
-            staged_output_path(output, "42").unwrap(),
-            PathBuf::from("C:/audio/.output.42.part.ogg")
-        );
     }
 
     #[test]
