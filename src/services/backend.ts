@@ -10,7 +10,13 @@ import type {
   DirectoryListing,
   FileOperationResult,
 } from "../types/fileManager";
-import type { AudioFormat, ConversionJob, PdfOperation } from "../types/jobs";
+import type {
+  AudioFormat,
+  ConversionJob,
+  PdfOperation,
+  SpeechModel,
+  TranscriptFormat,
+} from "../types/jobs";
 
 const browserFallback: AppBootstrap = {
   appVersion: "0.1.0-dev",
@@ -57,8 +63,19 @@ const browserFallback: AppBootstrap = {
       engine: "FFmpeg",
       status: "ready",
       bundled: true,
-      inputExtensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg"],
+      inputExtensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg", "mp4"],
       outputExtensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg"],
+    },
+    {
+      id: "speech-to-text",
+      category: "audio",
+      titleKey: "converters.speechToText.title",
+      descriptionKey: "converters.speechToText.description",
+      engine: "whisper.cpp",
+      status: "ready",
+      bundled: true,
+      inputExtensions: ["mp3", "wav", "flac", "m4a", "ogg", "mp4"],
+      outputExtensions: ["txt", "srt", "vtt", "json"],
     },
     {
       id: "office-to-pdf",
@@ -172,8 +189,21 @@ export async function chooseAudioFile(): Promise<string | null> {
     multiple: false,
     filters: [
       {
-        name: "Audio",
-        extensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg"],
+        name: "Audio and video",
+        extensions: [
+          "mp3",
+          "wav",
+          "flac",
+          "aac",
+          "m4a",
+          "ogg",
+          "mp4",
+          "mov",
+          "mkv",
+          "webm",
+          "avi",
+          "m4v",
+        ],
       },
     ],
   });
@@ -206,6 +236,18 @@ export async function chooseDocxOutput(
 export async function chooseAudioOutput(
   defaultPath: string,
   format: AudioFormat,
+): Promise<string | null> {
+  requireDesktop();
+  const selected = await save({
+    defaultPath,
+    filters: [{ name: format.toUpperCase(), extensions: [format] }],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseTranscriptOutput(
+  defaultPath: string,
+  format: TranscriptFormat,
 ): Promise<string | null> {
   requireDesktop();
   const selected = await save({
@@ -348,6 +390,23 @@ export async function enqueuePdfFolderToDocx(
   return invoke<ConversionJob[]>("enqueue_pdf_folder_to_docx", {
     inputDirectory,
     outputDirectory,
+  });
+}
+
+export async function enqueueTranscription(
+  inputPath: string,
+  outputPath: string,
+  format: TranscriptFormat,
+  language: string | null,
+  model: SpeechModel,
+): Promise<ConversionJob> {
+  requireDesktop();
+  return invoke<ConversionJob>("enqueue_transcription", {
+    inputPath,
+    outputPath,
+    format,
+    language,
+    model,
   });
 }
 

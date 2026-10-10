@@ -77,7 +77,12 @@ export const resources = {
         audio: {
           title: "Convert audio",
           description:
-            "Convert between MP3, WAV, FLAC, AAC, M4A, and OGG with FFmpeg.",
+            "Convert between MP3, WAV, FLAC, AAC, M4A, and OGG, or extract audio from video, with FFmpeg.",
+        },
+        speechToText: {
+          title: "Speech to text",
+          description:
+            "Transcribe audio or video to text or subtitles with Whisper, offline.",
         },
         officeToPdf: {
           title: "Office to PDF",
@@ -114,8 +119,8 @@ export const resources = {
         },
         input: {
           label: "Source file",
-          help: "MP3, WAV, FLAC, AAC, M4A, or OGG",
-          choose: "Choose audio",
+          help: "MP3, WAV, FLAC, AAC, M4A, OGG, or a video file",
+          choose: "Choose audio or video",
           change: "Change",
         },
         format: {
@@ -142,6 +147,47 @@ export const resources = {
         adding: "Adding…",
         queued: "Conversion added to the local queue.",
         batchQueued: "{{count}} audio files added to the local queue.",
+        viewJobs: "View jobs",
+      },
+      speech: {
+        back: "All conversion tools",
+        title: "Speech to text",
+        description:
+          "Transcribe speech from an audio or video file. Whisper runs entirely on this computer.",
+        input: {
+          label: "Source file",
+          help: "Audio or video: MP3, WAV, FLAC, AAC, M4A, OGG, MP4, MOV, MKV, WebM, AVI",
+          choose: "Choose audio or video",
+          change: "Change",
+        },
+        format: {
+          label: "Transcript format",
+          help: "Plain text, SRT or WebVTT subtitles, or JSON with timestamps",
+          txt: "Plain text (.txt)",
+          srt: "SRT subtitles (.srt)",
+          vtt: "WebVTT subtitles (.vtt)",
+          json: "JSON with timestamps (.json)",
+        },
+        language: {
+          label: "Spoken language",
+          help: "Automatic detection works for most recordings.",
+          auto: "Detect automatically",
+        },
+        model: {
+          label: "Accuracy",
+          help: "High accuracy downloads a 574 MB model once, then works offline.",
+          standard: "Standard (built in)",
+          highAccuracy: "High accuracy (574 MB download)",
+        },
+        output: {
+          label: "Save location",
+          help: "Existing files are never overwritten.",
+          choose: "Choose output",
+        },
+        localNotice: "Runs locally · Audio never leaves this computer",
+        convert: "Add to queue",
+        adding: "Adding…",
+        queued: "Transcription added to the local queue.",
         viewJobs: "View jobs",
       },
       images: {
@@ -383,6 +429,7 @@ export const resources = {
         pdfToImagesDetail: "{{source}} · {{format}} · {{dpi}} DPI",
         officeToPdfDetail: "{{source}} · Office to PDF",
         pdfToDocxDetail: "{{source}} · PDF to Word",
+        transcriptionDetail: "{{source}} → {{format}} transcript",
         status: {
           queued: "Queued",
           running: "Running",
@@ -532,7 +579,12 @@ export const resources = {
         audio: {
           title: "Ses dönüştür",
           description:
-            "FFmpeg ile MP3, WAV, FLAC, AAC, M4A ve OGG biçimleri arasında dönüştürün.",
+            "FFmpeg ile MP3, WAV, FLAC, AAC, M4A ve OGG arasında dönüştürün veya videodan sesi çıkarın.",
+        },
+        speechToText: {
+          title: "Konuşmadan metne",
+          description:
+            "Ses veya videoyu Whisper ile çevrimdışı olarak metne ya da altyazıya dönüştürün.",
         },
         officeToPdf: {
           title: "Office'ten PDF'ye",
@@ -569,8 +621,8 @@ export const resources = {
         },
         input: {
           label: "Kaynak dosya",
-          help: "MP3, WAV, FLAC, AAC, M4A veya OGG",
-          choose: "Ses dosyası seç",
+          help: "MP3, WAV, FLAC, AAC, M4A, OGG veya bir video dosyası",
+          choose: "Ses veya video seç",
           change: "Değiştir",
         },
         format: {
@@ -598,6 +650,47 @@ export const resources = {
         queued: "Dönüştürme yerel kuyruğa eklendi.",
         batchQueued: "{{count}} ses dosyası yerel kuyruğa eklendi.",
         viewJobs: "İşlemleri görüntüle",
+      },
+      speech: {
+        back: "Tüm dönüştürme araçları",
+        title: "Konuşmadan metne",
+        description:
+          "Bir ses veya video dosyasındaki konuşmayı yazıya dökün. Whisper tamamen bu bilgisayarda çalışır.",
+        input: {
+          label: "Kaynak dosya",
+          help: "Ses veya video: MP3, WAV, FLAC, AAC, M4A, OGG, MP4, MOV, MKV, WebM, AVI",
+          choose: "Ses veya video seç",
+          change: "Değiştir",
+        },
+        format: {
+          label: "Metin biçimi",
+          help: "Düz metin, SRT veya WebVTT altyazı ya da zaman damgalı JSON",
+          txt: "Düz metin (.txt)",
+          srt: "SRT altyazı (.srt)",
+          vtt: "WebVTT altyazı (.vtt)",
+          json: "Zaman damgalı JSON (.json)",
+        },
+        language: {
+          label: "Konuşma dili",
+          help: "Otomatik algılama çoğu kayıt için çalışır.",
+          auto: "Otomatik algıla",
+        },
+        model: {
+          label: "Doğruluk",
+          help: "Yüksek doğruluk, 574 MB'lık modeli bir kez indirir; ardından çevrimdışı çalışır.",
+          standard: "Standart (dahili)",
+          highAccuracy: "Yüksek doğruluk (574 MB indirme)",
+        },
+        output: {
+          label: "Kayıt konumu",
+          help: "Mevcut dosyaların üzerine asla yazılmaz.",
+          choose: "Çıktıyı seç",
+        },
+        localNotice: "Yerel çalışır · Ses bu bilgisayardan çıkmaz",
+        convert: "Kuyruğa ekle",
+        adding: "Ekleniyor…",
+        queued: "Metne dönüştürme yerel kuyruğa eklendi.",
+        viewJobs: "İşleri görüntüle",
       },
       images: {
         back: "Tüm dönüştürme araçları",
@@ -844,6 +937,7 @@ export const resources = {
         pdfToImagesDetail: "{{source}} · {{format}} · {{dpi}} DPI",
         officeToPdfDetail: "{{source}} · Office'ten PDF'ye",
         pdfToDocxDetail: "{{source}} · PDF'den Word'e",
+        transcriptionDetail: "{{source}} → {{format}} metin",
         status: {
           queued: "Kuyrukta",
           running: "Çalışıyor",

@@ -67,6 +67,18 @@ export interface PdfToDocxJobKind {
   output_path: string;
 }
 
+export type TranscriptFormat = "txt" | "srt" | "vtt" | "json";
+export type SpeechModel = "standard" | "high_accuracy";
+
+export interface TranscriptionJobKind {
+  type: "transcription";
+  input_path: string;
+  output_path: string;
+  format: TranscriptFormat;
+  language: string | null;
+  model: SpeechModel;
+}
+
 export interface ConversionJob {
   id: string;
   jobType:
@@ -75,14 +87,16 @@ export interface ConversionJob {
     | "images_to_pdf"
     | "pdf_to_images"
     | "office_to_pdf"
-    | "pdf_to_docx";
+    | "pdf_to_docx"
+    | "transcription";
   kind:
     | AudioJobKind
     | PdfJobKind
     | ImagesToPdfJobKind
     | PdfToImagesJobKind
     | OfficeToPdfJobKind
-    | PdfToDocxJobKind;
+    | PdfToDocxJobKind
+    | TranscriptionJobKind;
   status: JobStatus;
   progress: number;
   createdAt: number;
