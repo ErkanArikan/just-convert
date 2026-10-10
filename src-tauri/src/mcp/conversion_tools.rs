@@ -10,8 +10,8 @@ use super::{paths, tool_error, JustConvertServer, WaitOptions};
 use crate::{
     application::converter_registry,
     domain::job::{
-        AudioFormat, ImageFolderMode, PdfImageFormat, PdfOperation, SpeechModel, TranscriptFormat,
-        VideoFormat, VideoQuality,
+        AudioFormat, ImageFolderMode, OcrFormat, OcrLanguage, PdfImageFormat, PdfOperation,
+        SpeechModel, TranscriptFormat, VideoFormat, VideoQuality,
     },
 };
 
@@ -210,6 +210,20 @@ pub struct ExtractVideoFramesRequest {
     pub wait: WaitOptions,
 }
 
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct OcrRequest {
+    /// Absolute path of a scanned PDF or an image (PNG, JPG, TIFF, BMP, WebP).
+    pub input_path: String,
+    /// pdf makes a searchable PDF with an invisible text layer; txt returns plain text. Defaults to pdf.
+    pub format: Option<OcrFormat>,
+    /// Languages in the document: eng, tur, or both. Defaults to eng. Choose only tur for Turkish documents; mixing languages lowers accuracy.
+    pub languages: Option<Vec<OcrLanguage>>,
+    /// Absolute output path with the format's extension. Defaults to the input name next to the input.
+    pub output_path: Option<String>,
+    #[serde(flatten)]
+    pub wait: WaitOptions,
+}
+
 const DEFAULT_DPI: u16 = 150;
 
 #[tool_router(router = conversion_tools, vis = "pub(super)")]
@@ -263,6 +277,48 @@ impl JustConvertServer {
             )?;
             self.jobs
                 .enqueue_audio(input, output, request.format)
+                .map(|job| vec![job])
+        })();
+        Ok(self.finish(result, request.wait, meta, peer).await)
+    }
+
+    #[tool(
+        description = "Recognize text in a scanned PDF or an image with Tesseract (English, Turkish), producing a searchable PDF or a plain text file, entirely on this machine.",
+        annotations(destructive_hint = false, open_world_hint = false)
+    )]
+    async fn ocr(
+        &self,
+        Parameters(request): Parameters<OcrRequest>,
+        meta: RequestMetaObject,
+        peer: Peer<RoleServer>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let result = (|| {
+            let format = request.format.unwrap_or(OcrFormat::Pdf);
+            let input = paths::absolute(&request.input_path)?;
+            let label = if request.output_path.is_none()
+                && input.to_lowercase().ends_with(".pdf")
+                && format == OcrFormat::Pdf
+            {
+                "-ocr"
+            } else {
+                ""
+            };
+            let output = paths::output_file(
+                request.output_path.as_deref(),
+                &input,
+                label,
+                format.extension(),
+            )?;
+            self.jobs
+                .enqueue_ocr(
+                    input,
+                    output,
+                    format,
+                    request
+                        .languages
+                        .clone()
+                        .unwrap_or_else(|| vec![OcrLanguage::English]),
+                )
                 .map(|job| vec![job])
         })();
         Ok(self.finish(result, request.wait, meta, peer).await)

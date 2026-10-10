@@ -208,6 +208,7 @@ pub fn serve() -> Result<(), String> {
             dependency_service: Some(Arc::clone(&dependencies)),
             pdf_to_docx_worker_path: platform::find_pdf_to_docx_worker(resource_directory.clone()),
             whisper_model_path: platform::find_whisper_model(resource_directory.as_deref()),
+            tessdata_path: platform::find_tessdata(resource_directory.as_deref()),
             ..EnginePaths::default()
         },
     )?);

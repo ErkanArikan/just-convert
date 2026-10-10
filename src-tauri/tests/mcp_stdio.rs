@@ -123,6 +123,7 @@ fn lists_every_conversion_tool() {
         "list_converters",
         "convert_audio",
         "transcribe",
+        "ocr",
         "convert_video",
         "extract_video_frames",
         "images_to_pdf",
@@ -256,4 +257,25 @@ fn converts_video_and_extracts_frames() {
     assert_eq!(job["status"], "completed", "{result}");
     assert!(files.path().join("clip-frame-001.jpg").is_file());
     assert!(files.path().join("clip-frame-002.jpg").is_file());
+}
+
+#[test]
+#[ignore = "needs the fetched Tesseract language data"]
+fn recognizes_text_in_an_image() {
+    let data = tempfile::tempdir().unwrap();
+    let files = tempfile::tempdir().unwrap();
+    let input = files.path().join("scan.png");
+    std::fs::copy(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ocr-en.png"),
+        &input,
+    )
+    .unwrap();
+    let mut session = Session::start(data.path());
+
+    let result = session.call("ocr", json!({ "input_path": input, "format": "txt" }));
+
+    let job = &result["structuredContent"]["jobs"][0];
+    assert_eq!(job["status"], "completed", "{result}");
+    let text = std::fs::read_to_string(files.path().join("scan.txt")).unwrap();
+    assert!(text.contains("Invoice 2026"), "{text}");
 }
