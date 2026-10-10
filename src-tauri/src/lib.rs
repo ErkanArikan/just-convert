@@ -1,6 +1,8 @@
 pub mod application;
 mod commands;
 pub mod domain;
+#[cfg(feature = "mcp")]
+pub mod mcp;
 mod platform;
 
 use std::sync::Arc;
