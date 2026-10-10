@@ -15,4 +15,5 @@ These records capture decisions that are expensive to reverse. Proposed changes 
 | [ADR-009](ADR-009-image-and-raster-conversion.md) | Native image assembly and PDFium rasterization      |
 | [ADR-010](ADR-010-office-to-pdf.md)               | External LibreOffice with isolated job profiles     |
 | [ADR-011](ADR-011-pdf-to-docx.md)                 | External Python worker for text PDF-to-DOCX         |
+| [ADR-012](ADR-012-mcp-server.md)                  | Headless stdio MCP server over the job service      |
 | [ADR-013](ADR-013-macos-and-linux.md)             | macOS and Linux support with self-contained engines |

@@ -77,6 +77,30 @@ Built with Tauri 2, Rust, React, TypeScript, and pnpm.
 - Run the desktop application: `pnpm tauri dev`
 - Run the complete quality gate: `pnpm check`
 
+## AI Assistant Integration (MCP)
+
+`just-convert-mcp` is an optional headless [Model Context Protocol](https://modelcontextprotocol.io) server that exposes the converters to AI assistants such as Claude, Cursor, VS Code, Codex, and Gemini CLI. It runs locally over stdio and opens no network port; files never leave the machine. Each request goes through the same validated job queue as the desktop app.
+
+Build it with:
+
+```sh
+cargo build --release --features mcp --bin just-convert-mcp --manifest-path src-tauri/Cargo.toml
+```
+
+Then register the binary with your client. Most clients accept this JSON:
+
+```json
+{
+  "mcpServers": {
+    "just-convert": { "command": "/absolute/path/to/just-convert-mcp" }
+  }
+}
+```
+
+For Claude Code: `claude mcp add just-convert -- /absolute/path/to/just-convert-mcp`.
+
+Engines are found the same way as the desktop app: next to the executable under `vendor/`, through the `LOCAL_FILE_CONVERTER_*` overrides, or on `PATH`. Call `list_converters` to see what is ready. See [ADR-012](docs/architecture/ADR-012-mcp-server.md).
+
 ## Continuous Integration and Releases
 
 - **Quality** (`quality.yml`): `pnpm check` on Windows, macOS, and Ubuntu for every push and pull request.
