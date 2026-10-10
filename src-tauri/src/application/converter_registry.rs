@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use crate::{
-    application::{audio_converter, video_converter},
+    application::{audio_converter, ocr, video_converter},
     domain::converter::{ConverterCapability, ConverterCategory, ConverterStatus},
     platform,
 };
@@ -43,6 +43,11 @@ pub fn capabilities_with_dependencies(
     let speech_status = if ffmpeg_status == ConverterStatus::Ready
         && platform::find_whisper_model(resource_directory).is_some()
     {
+        ConverterStatus::Ready
+    } else {
+        ConverterStatus::ExternalRequired
+    };
+    let ocr_status = if platform::find_tessdata(resources().as_deref()).is_some() {
         ConverterStatus::Ready
     } else {
         ConverterStatus::ExternalRequired
@@ -110,6 +115,17 @@ pub fn capabilities_with_dependencies(
             &["mp4", "webm", "mov", "mkv", "gif", "png", "jpg"],
         ),
         ConverterCapability::new(
+            "ocr",
+            ConverterCategory::Document,
+            "converters.ocr.title",
+            "converters.ocr.description",
+            "Tesseract",
+            ocr_status,
+            true,
+            ocr::SUPPORTED_INPUTS,
+            &["pdf", "txt"],
+        ),
+        ConverterCapability::new(
             "speech-to-text",
             ConverterCategory::Audio,
             "converters.speechToText.title",
@@ -159,6 +175,7 @@ mod tests {
             "pdf-to-images",
             "audio",
             "video",
+            "ocr",
             "speech-to-text",
             "office-to-pdf",
             "pdf-to-docx",

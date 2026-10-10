@@ -17,13 +17,15 @@ use crate::{
         dependency_service::DependencyService,
         image_converter, job_history,
         job_queue::JobQueue,
+        ocr::{self, OcrRequest},
         office_converter, pdf_converter, pdf_docx_converter, pdf_image_converter,
         transcription::{self, Transcription},
         video_converter::{self, FrameExtraction, VideoConversion},
     },
     domain::job::{
         AudioFormat, ExecutionOutcome, ImageFolderMode, Job, JobError, JobKind, JobStatus,
-        PdfImageFormat, PdfOperation, SpeechModel, TranscriptFormat, VideoFormat, VideoQuality,
+        OcrFormat, OcrLanguage, PdfImageFormat, PdfOperation, SpeechModel, TranscriptFormat,
+        VideoFormat, VideoQuality,
     },
     platform::PdfToDocxRuntime,
 };
@@ -40,6 +42,7 @@ pub struct EnginePaths {
     pub python_path: Option<PathBuf>,
     pub pdf_to_docx_worker_path: Option<PathBuf>,
     pub whisper_model_path: Option<PathBuf>,
+    pub tessdata_path: Option<PathBuf>,
     pub dependency_service: Option<Arc<DependencyService>>,
 }
 
@@ -61,6 +64,7 @@ pub struct JobService {
     python_path: Option<PathBuf>,
     pdf_to_docx_worker_path: Option<PathBuf>,
     whisper_model_path: Option<PathBuf>,
+    tessdata_path: Option<PathBuf>,
     models_directory: PathBuf,
     dependency_service: Option<Arc<DependencyService>>,
 }
@@ -104,6 +108,7 @@ impl JobService {
             python_path: engines.python_path,
             pdf_to_docx_worker_path: engines.pdf_to_docx_worker_path,
             whisper_model_path: engines.whisper_model_path,
+            tessdata_path: engines.tessdata_path,
             models_directory: data_directory.join("models"),
             dependency_service: engines.dependency_service,
         };
@@ -487,6 +492,39 @@ impl JobService {
             interval_seconds,
             now,
         );
+        {
+            let mut state = self.state.lock().map_err(|_| "Job queue lock failed")?;
+            state.queue.enqueue(job.clone());
+            state.jobs.push(job.clone());
+            self.persist(&state)?;
+        }
+        self.start_worker_if_needed();
+        Ok(job)
+    }
+
+    pub fn enqueue_ocr(
+        self: &Arc<Self>,
+        input_path: String,
+        output_path: String,
+        format: OcrFormat,
+        languages: Vec<OcrLanguage>,
+    ) -> Result<Job, String> {
+        if self.tessdata_path.is_none() {
+            return Err("The bundled OCR language data is unavailable".into());
+        }
+        if ocr::is_pdf(Path::new(&input_path)) && self.pdfium_path.is_none() {
+            return Err("The bundled PDFium library is unavailable".into());
+        }
+        ocr::validate_request(
+            Path::new(&input_path),
+            Path::new(&output_path),
+            format,
+            &languages,
+        )?;
+
+        let now = unix_timestamp();
+        let id = format!("{now}-{}", NEXT_JOB_ID.fetch_add(1, Ordering::Relaxed));
+        let job = Job::queued_ocr(id, input_path, output_path, format, languages, now);
         {
             let mut state = self.state.lock().map_err(|_| "Job queue lock failed")?;
             state.queue.enqueue(job.clone());
@@ -898,6 +936,30 @@ impl JobService {
                         output_path: Path::new(output_path),
                         format: *format,
                         language: language.as_deref(),
+                        job_id: &job.id,
+                    },
+                    cancellation,
+                    |progress| self.update_progress(&job.id, progress),
+                )
+            }
+            JobKind::Ocr {
+                input_path,
+                output_path,
+                format,
+                languages,
+            } => {
+                let tessdata_directory = self
+                    .tessdata_path
+                    .as_deref()
+                    .ok_or("The bundled OCR language data is unavailable")?;
+                ocr::convert(
+                    OcrRequest {
+                        tessdata_directory,
+                        pdfium_path: self.pdfium_path.as_deref(),
+                        input_path: Path::new(input_path),
+                        output_path: Path::new(output_path),
+                        format: *format,
+                        languages,
                         job_id: &job.id,
                     },
                     cancellation,

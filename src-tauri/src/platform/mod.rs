@@ -150,6 +150,19 @@ pub fn find_whisper_model(resource_dir: Option<&Path>) -> Option<PathBuf> {
         .find(|candidate| candidate.is_file())
 }
 
+/// The directory holding the bundled `eng`/`tur` models and the PDF font.
+pub fn find_tessdata(resource_dir: Option<&Path>) -> Option<PathBuf> {
+    bundled_candidates(resource_dir, "vendor/tesseract/tessdata/eng.traineddata")
+        .into_iter()
+        .find(|candidate| candidate.is_file())
+        .and_then(|model| model.parent().map(Path::to_path_buf))
+        .filter(|directory| {
+            ["tur.traineddata", "pdf.ttf"]
+                .iter()
+                .all(|name| directory.join(name).is_file())
+        })
+}
+
 pub fn find_bundled_pdf_to_docx(resource_dir: Option<&Path>) -> Option<PathBuf> {
     let relative = if cfg!(windows) {
         "vendor/pdf-to-docx/pdf-to-docx.exe"

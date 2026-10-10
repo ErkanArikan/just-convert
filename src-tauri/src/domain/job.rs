@@ -105,6 +105,42 @@ impl VideoFormat {
     }
 }
 
+#[cfg_attr(feature = "mcp", derive(schemars::JsonSchema))]
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum OcrFormat {
+    /// Searchable PDF: the page images with an invisible text layer.
+    Pdf,
+    Txt,
+}
+
+impl OcrFormat {
+    pub fn extension(self) -> &'static str {
+        match self {
+            Self::Pdf => "pdf",
+            Self::Txt => "txt",
+        }
+    }
+}
+
+#[cfg_attr(feature = "mcp", derive(schemars::JsonSchema))]
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub enum OcrLanguage {
+    #[serde(rename = "eng")]
+    English,
+    #[serde(rename = "tur")]
+    Turkish,
+}
+
+impl OcrLanguage {
+    pub fn code(self) -> &'static str {
+        match self {
+            Self::English => "eng",
+            Self::Turkish => "tur",
+        }
+    }
+}
+
 /// Compression preset: trades file size against visual quality.
 #[cfg_attr(feature = "mcp", derive(schemars::JsonSchema))]
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
@@ -211,6 +247,12 @@ pub enum JobKind {
         output_directory: String,
         format: PdfImageFormat,
         interval_seconds: u32,
+    },
+    Ocr {
+        input_path: String,
+        output_path: String,
+        format: OcrFormat,
+        languages: Vec<OcrLanguage>,
     },
 }
 
@@ -438,6 +480,32 @@ impl Job {
                 output_directory: output_directory.into(),
                 format,
                 interval_seconds,
+            },
+            status: JobStatus::Queued,
+            progress: 0,
+            created_at,
+            started_at: None,
+            finished_at: None,
+            error: None,
+        }
+    }
+
+    pub fn queued_ocr(
+        id: impl Into<String>,
+        input_path: impl Into<String>,
+        output_path: impl Into<String>,
+        format: OcrFormat,
+        languages: Vec<OcrLanguage>,
+        created_at: u64,
+    ) -> Self {
+        Self {
+            id: id.into(),
+            job_type: "ocr".into(),
+            kind: JobKind::Ocr {
+                input_path: input_path.into(),
+                output_path: output_path.into(),
+                format,
+                languages,
             },
             status: JobStatus::Queued,
             progress: 0,

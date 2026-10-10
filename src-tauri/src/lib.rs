@@ -37,6 +37,7 @@ pub fn run() {
                         resource_directory.clone(),
                     ),
                     whisper_model_path: platform::find_whisper_model(resource_directory.as_deref()),
+                    tessdata_path: platform::find_tessdata(resource_directory.as_deref()),
                     ..EnginePaths::default()
                 },
             )?);
@@ -68,6 +69,7 @@ pub fn run() {
             commands::jobs::enqueue_pdf_to_docx,
             commands::jobs::enqueue_pdf_folder_to_docx,
             commands::jobs::enqueue_transcription,
+            commands::jobs::enqueue_ocr,
             commands::jobs::enqueue_video_conversion,
             commands::jobs::enqueue_video_frames,
             commands::jobs::get_pdf_page_count,
