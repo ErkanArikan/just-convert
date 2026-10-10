@@ -10,6 +10,7 @@ Licensed under your choice of the [MIT or Apache 2.0 license](LICENSE).
 
 - **Audio** — Convert between MP3, WAV, FLAC, AAC, M4A, and OGG, or extract audio from MP4, MOV, MKV, WebM, AVI, and M4V video (single file or folder batch)
 - **Video** — Convert or compress MP4, WebM, MOV, MKV, AVI, and more to MP4, WebM, MOV, MKV, or animated GIF with size presets and a maximum height, or extract still frames every N seconds
+- **OCR** — Turn scanned PDFs and images (PNG, JPG, TIFF, BMP, WebP) into searchable PDFs or plain text with Tesseract, in English or Turkish, offline
 - **Speech to text** — Transcribe audio or video to text, SRT or WebVTT subtitles, or timestamped JSON with Whisper, offline; an optional high-accuracy model downloads once on request
 - **Images to PDF** — Combine JPG, PNG, WebP, and TIFF images into a single PDF or one PDF per image
 - **PDF to Images** — Render PDF pages to PNG or JPEG at normal (150 DPI) or high (300 DPI) quality
