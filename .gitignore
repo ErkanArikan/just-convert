@@ -51,4 +51,6 @@ vendor/pdfium/bin/libpdfium.*
 vendor/libreoffice/
 vendor/pdf-to-docx/
 vendor/whisper/
+vendor/tesseract/
+vendor/tesseract-build/
 src-tauri/signing.conf.json

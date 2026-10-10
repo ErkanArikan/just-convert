@@ -43,4 +43,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev patchelf
       - run: pnpm install --frozen-lockfile
+      - uses: actions/cache@v4
+        with:
+          path: vendor/tesseract-build
+          key: tesseract-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vendor/manifests/tesseract.json') }}
+      - name: Fetch pinned Tesseract sources
+        run: node scripts/fetch-engines.mjs tesseract
       - run: pnpm check

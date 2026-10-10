@@ -3,7 +3,8 @@
     "resources": {
       "../vendor/libreoffice/": "vendor/libreoffice/",
       "../vendor/pdf-to-docx/": "vendor/pdf-to-docx/",
-      "../vendor/whisper/": "vendor/whisper/"
+      "../vendor/whisper/": "vendor/whisper/",
+      "../vendor/tesseract/": "vendor/tesseract/"
     }
   }
 }

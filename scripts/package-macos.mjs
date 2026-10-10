@@ -104,6 +104,7 @@ for (const engine of [
   "libreoffice",
   "pdf-to-docx",
   "whisper",
+  "tesseract",
 ]) {
   await rm(join(vendor, engine), { recursive: true, force: true });
   run("ditto", [resolve(projectRoot, "vendor", engine), join(vendor, engine)]);

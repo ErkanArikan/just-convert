@@ -265,8 +265,12 @@ async function fetchEntry(component, entry) {
   }
 }
 
-const manifests = (await readdir(manifestDirectory)).filter((name) =>
-  name.endsWith(".json"),
+// Optional arguments limit the run to the named manifests, for example `tesseract`.
+const only = process.argv.slice(2);
+const manifests = (await readdir(manifestDirectory)).filter(
+  (name) =>
+    name.endsWith(".json") &&
+    (only.length === 0 || only.includes(name.replace(/\.json$/, ""))),
 );
 for (const name of manifests.sort()) {
   const manifest = JSON.parse(

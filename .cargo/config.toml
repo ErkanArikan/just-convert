@@ -6,3 +6,6 @@ GGML_AVX = "ON"
 GGML_AVX2 = "ON"
 GGML_FMA = "ON"
 GGML_F16C = "ON"
+
+# Build Tesseract and Leptonica from the checksum-pinned sources that `pnpm fetch:engines` unpacks here.
+TESSERACT_RS_CACHE_DIR = { value = "vendor/tesseract-build", relative = true }
