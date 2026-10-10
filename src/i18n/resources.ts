@@ -79,6 +79,16 @@ export const resources = {
           description:
             "Convert between MP3, WAV, FLAC, AAC, M4A, and OGG, or extract audio from video, with FFmpeg.",
         },
+        removeBackground: {
+          title: "Remove background",
+          description:
+            "Cut out the subject of a photo onto a transparent PNG with a local AI model.",
+        },
+        upscaleImage: {
+          title: "Upscale image",
+          description:
+            "Enlarge a photo 2x or 4x and restore detail with the Real-ESRGAN AI model.",
+        },
         ocr: {
           title: "Recognize text (OCR)",
           description:
@@ -157,6 +167,49 @@ export const resources = {
         adding: "Adding…",
         queued: "Conversion added to the local queue.",
         batchQueued: "{{count}} audio files added to the local queue.",
+        viewJobs: "View jobs",
+      },
+      imageAi: {
+        back: "All conversion tools",
+        input: {
+          label: "Source image",
+          help: "PNG, JPG, WebP, BMP, or TIFF",
+          choose: "Choose image",
+          change: "Change",
+        },
+        removeBackground: {
+          title: "Remove background",
+          description:
+            "Cut out the main subject of a photo onto a transparent PNG. The AI model runs entirely on this computer.",
+          engine: "U²-Net",
+        },
+        upscale: {
+          title: "Upscale image",
+          description:
+            "Enlarge a photo and restore detail. The AI model runs entirely on this computer; images up to 4 megapixels are supported.",
+          engine: "Real-ESRGAN",
+        },
+        scale: {
+          label: "Enlargement",
+          help: "4x restores the most detail; 2x is smaller and faster to share.",
+          x2: "2x",
+          x4: "4x",
+        },
+        format: {
+          label: "Result",
+          help: "PNG keeps transparency; JPG makes smaller files.",
+          png: "PNG (.png)",
+          jpg: "JPG (.jpg)",
+        },
+        output: {
+          label: "Save location",
+          help: "Existing files are never overwritten.",
+          choose: "Choose output",
+        },
+        localNotice: "Runs locally · Images never leave this computer",
+        convert: "Add to queue",
+        adding: "Adding…",
+        queued: "Image task added to the local queue.",
         viewJobs: "View jobs",
       },
       ocr: {
@@ -539,6 +592,8 @@ export const resources = {
         pdfToDocxDetail: "{{source}} · PDF to Word",
         transcriptionDetail: "{{source}} → {{format}} transcript",
         ocrDetail: "{{source}} → {{format}} (OCR)",
+        removeBackgroundDetail: "{{source}} → transparent background",
+        upscaleDetail: "{{source}} → upscaled {{scale}}x",
         videoConversionDetail: "{{source}} → {{format}}",
         videoFramesDetail: "{{source}} → frames every {{seconds}} s",
         status: {
@@ -692,6 +747,16 @@ export const resources = {
           description:
             "FFmpeg ile MP3, WAV, FLAC, AAC, M4A ve OGG arasında dönüştürün veya videodan sesi çıkarın.",
         },
+        removeBackground: {
+          title: "Arka planı kaldır",
+          description:
+            "Bir fotoğrafın ana öznesini yerel bir yapay zeka modeliyle saydam PNG olarak ayırın.",
+        },
+        upscaleImage: {
+          title: "Görseli büyüt",
+          description:
+            "Bir fotoğrafı Real-ESRGAN yapay zeka modeliyle 2 veya 4 kat büyütün ve ayrıntıyı geri kazandırın.",
+        },
         ocr: {
           title: "Metin tanı (OCR)",
           description:
@@ -771,6 +836,49 @@ export const resources = {
         queued: "Dönüştürme yerel kuyruğa eklendi.",
         batchQueued: "{{count}} ses dosyası yerel kuyruğa eklendi.",
         viewJobs: "İşlemleri görüntüle",
+      },
+      imageAi: {
+        back: "Tüm dönüştürme araçları",
+        input: {
+          label: "Kaynak görsel",
+          help: "PNG, JPG, WebP, BMP veya TIFF",
+          choose: "Görsel seç",
+          change: "Değiştir",
+        },
+        removeBackground: {
+          title: "Arka planı kaldır",
+          description:
+            "Bir fotoğrafın ana öznesini saydam bir PNG olarak ayırın. Yapay zeka modeli tamamen bu bilgisayarda çalışır.",
+          engine: "U²-Net",
+        },
+        upscale: {
+          title: "Görseli büyüt",
+          description:
+            "Bir fotoğrafı büyütün ve ayrıntıyı geri kazandırın. Yapay zeka modeli tamamen bu bilgisayarda çalışır; 4 megapiksele kadar görseller desteklenir.",
+          engine: "Real-ESRGAN",
+        },
+        scale: {
+          label: "Büyütme",
+          help: "4x en fazla ayrıntıyı geri kazandırır; 2x daha küçük ve paylaşması daha hızlıdır.",
+          x2: "2x",
+          x4: "4x",
+        },
+        format: {
+          label: "Sonuç",
+          help: "PNG saydamlığı korur; JPG daha küçük dosyalar üretir.",
+          png: "PNG (.png)",
+          jpg: "JPG (.jpg)",
+        },
+        output: {
+          label: "Kayıt konumu",
+          help: "Mevcut dosyaların üzerine asla yazılmaz.",
+          choose: "Çıktıyı seç",
+        },
+        localNotice: "Yerel çalışır · Görseller bu bilgisayardan çıkmaz",
+        convert: "Kuyruğa ekle",
+        adding: "Ekleniyor…",
+        queued: "Görsel görevi yerel kuyruğa eklendi.",
+        viewJobs: "İşleri görüntüle",
       },
       ocr: {
         back: "Tüm dönüştürme araçları",
@@ -1158,6 +1266,8 @@ export const resources = {
         pdfToDocxDetail: "{{source}} · PDF'den Word'e",
         transcriptionDetail: "{{source}} → {{format}} metin",
         ocrDetail: "{{source}} → {{format}} (OCR)",
+        removeBackgroundDetail: "{{source}} → saydam arka plan",
+        upscaleDetail: "{{source}} → {{scale}}x büyütüldü",
         videoConversionDetail: "{{source}} → {{format}}",
         videoFramesDetail: "{{source}} → {{seconds}} sn'de bir kare",
         status: {

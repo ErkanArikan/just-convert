@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { ConverterGrid } from "./features/converters/ConverterGrid";
 import { AudioConverter } from "./features/converters/AudioConverter";
+import { ImageAiTool } from "./features/converters/ImageAiTool";
 import { OcrConverter } from "./features/converters/OcrConverter";
 import { VideoConverter } from "./features/converters/VideoConverter";
 import { SpeechToText } from "./features/converters/SpeechToText";
@@ -222,6 +223,15 @@ function App() {
           {activeSection === "convert" && activeTool === "audio" ? (
             <AudioConverter
               desktopAvailable={isTauri()}
+              onBack={() => setActiveTool(null)}
+              onViewJobs={() => setActiveSection("jobs")}
+            />
+          ) : activeSection === "convert" &&
+            (activeTool === "remove-background" ||
+              activeTool === "upscale-image") ? (
+            <ImageAiTool
+              desktopAvailable={isTauri()}
+              mode={activeTool}
               onBack={() => setActiveTool(null)}
               onViewJobs={() => setActiveSection("jobs")}
             />

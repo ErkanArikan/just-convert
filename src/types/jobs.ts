@@ -110,6 +110,16 @@ export interface OcrJobKind {
   languages: OcrLanguage[];
 }
 
+export type ImageAiOperation =
+  { type: "remove_background" } | { type: "upscale"; scale: 2 | 4 };
+
+export interface ImageAiJobKind {
+  type: "image_ai";
+  input_path: string;
+  output_path: string;
+  operation: ImageAiOperation;
+}
+
 export interface ConversionJob {
   id: string;
   jobType:
@@ -122,7 +132,8 @@ export interface ConversionJob {
     | "transcription"
     | "video_conversion"
     | "video_frames"
-    | "ocr";
+    | "ocr"
+    | "image_ai";
   kind:
     | AudioJobKind
     | PdfJobKind
@@ -133,7 +144,8 @@ export interface ConversionJob {
     | TranscriptionJobKind
     | VideoConversionJobKind
     | VideoFramesJobKind
-    | OcrJobKind;
+    | OcrJobKind
+    | ImageAiJobKind;
   status: JobStatus;
   progress: number;
   createdAt: number;

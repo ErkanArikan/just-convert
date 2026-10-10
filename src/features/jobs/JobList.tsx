@@ -143,6 +143,23 @@ export function JobList({ desktopAvailable }: JobListProps) {
           }),
         };
       }
+      if (job.kind.type === "image_ai") {
+        return {
+          output: fileName(job.kind.output_path),
+          detail: t(
+            job.kind.operation.type === "upscale"
+              ? "jobs.upscaleDetail"
+              : "jobs.removeBackgroundDetail",
+            {
+              source: fileName(job.kind.input_path),
+              scale:
+                job.kind.operation.type === "upscale"
+                  ? job.kind.operation.scale
+                  : undefined,
+            },
+          ),
+        };
+      }
       if (job.kind.type === "ocr") {
         return {
           output: fileName(job.kind.output_path),

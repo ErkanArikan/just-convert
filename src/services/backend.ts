@@ -13,6 +13,7 @@ import type {
 import type {
   AudioFormat,
   ConversionJob,
+  ImageAiOperation,
   OcrFormat,
   OcrLanguage,
   PdfOperation,
@@ -69,6 +70,28 @@ const browserFallback: AppBootstrap = {
       bundled: true,
       inputExtensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg", "mp4"],
       outputExtensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg"],
+    },
+    {
+      id: "remove-background",
+      category: "image",
+      titleKey: "converters.removeBackground.title",
+      descriptionKey: "converters.removeBackground.description",
+      engine: "U²-Net",
+      status: "ready",
+      bundled: true,
+      inputExtensions: ["png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff"],
+      outputExtensions: ["png"],
+    },
+    {
+      id: "upscale-image",
+      category: "image",
+      titleKey: "converters.upscaleImage.title",
+      descriptionKey: "converters.upscaleImage.description",
+      engine: "Real-ESRGAN",
+      status: "ready",
+      bundled: true,
+      inputExtensions: ["png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff"],
+      outputExtensions: ["png", "jpg"],
     },
     {
       id: "video",
@@ -276,6 +299,33 @@ export async function chooseAudioOutput(
   const selected = await save({
     defaultPath,
     filters: [{ name: format.toUpperCase(), extensions: [format] }],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseImageFile(): Promise<string | null> {
+  requireDesktop();
+  const selected = await open({
+    directory: false,
+    multiple: false,
+    filters: [
+      {
+        name: "Images",
+        extensions: ["png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff"],
+      },
+    ],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseImageOutput(
+  defaultPath: string,
+  extensions: string[],
+): Promise<string | null> {
+  requireDesktop();
+  const selected = await save({
+    defaultPath,
+    filters: [{ name: extensions.join(", ").toUpperCase(), extensions }],
   });
   return typeof selected === "string" ? selected : null;
 }
@@ -492,6 +542,19 @@ export async function enqueuePdfFolderToDocx(
   return invoke<ConversionJob[]>("enqueue_pdf_folder_to_docx", {
     inputDirectory,
     outputDirectory,
+  });
+}
+
+export async function enqueueImageAi(
+  inputPath: string,
+  outputPath: string,
+  operation: ImageAiOperation,
+): Promise<ConversionJob> {
+  requireDesktop();
+  return invoke<ConversionJob>("enqueue_image_ai", {
+    inputPath,
+    outputPath,
+    operation,
   });
 }
 

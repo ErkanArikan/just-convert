@@ -3,7 +3,9 @@ import {
   Clapperboard,
   FileAudio,
   FileImage,
+  Eraser,
   FileOutput,
+  Maximize2,
   ScanText,
   FileText,
   Files,
@@ -19,6 +21,8 @@ const icons = {
   audio: FileAudio,
   video: Clapperboard,
   ocr: ScanText,
+  "remove-background": Eraser,
+  "upscale-image": Maximize2,
   "speech-to-text": Captions,
   "office-to-pdf": FileOutput,
   "pdf-to-docx": FileText,
@@ -40,7 +44,7 @@ export function ConverterGrid({
   if (loading) {
     return (
       <div className="converter-grid" aria-label={t("common.loading")}>
-        {Array.from({ length: 9 }, (_, index) => (
+        {Array.from({ length: 11 }, (_, index) => (
           <div className="skeleton" key={index} aria-hidden="true" />
         ))}
       </div>
