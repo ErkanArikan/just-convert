@@ -9,7 +9,7 @@ AI assistants and agent harnesses (Claude, Cursor, VS Code, Codex, Gemini CLI, a
 
 ## Decision
 
-Ship a separate headless binary, `just-convert-mcp`, built from the same crate behind the optional `mcp` cargo feature. It speaks MCP over stdio only, using the official Rust SDK (`rmcp`), and opens no network listener. The desktop build and installer are unchanged when the feature is off.
+Serve MCP from the desktop executable itself: `just-convert --mcp` runs a headless stdio MCP server instead of opening a window, using the official Rust SDK (`rmcp`) behind the default `mcp` cargo feature. It opens no network listener. Because every installer already ships that executable next to the bundled engines (ADR-013), MCP needs no separate install. A standalone `just-convert-mcp` binary target remains for development.
 
 The server constructs its own `JobService` and calls the same `enqueue_*` methods as the Tauri commands, so every request goes through the existing adapter validation, staging, and queue. Tools mirror the job service one-to-one, plus `list_converters`, `get_job`, `cancel_job`, and `list_jobs`. Tools carry MCP annotations (read-only or non-destructive, closed-world).
 
@@ -21,10 +21,16 @@ Agent-facing conveniences live only in the MCP layer:
 
 The server reads engine overrides from the desktop app's settings database, but it keeps its job history in a separate `mcp/` subdirectory of the app-data folder, so the desktop app and the server can run at the same time without contending for one history file. `JUST_CONVERT_DATA_DIR` overrides the base directory, for tests.
 
-Engine discovery is unchanged. When the binary sits next to the desktop executable, it finds the bundled `vendor/` engines. Otherwise it falls back to the `LOCAL_FILE_CONVERTER_*` overrides and `PATH`.
+The server resolves the app's resource directory from the executable's location (next to it on Windows, `Contents/Resources` on macOS, `lib/Just Convert` on Linux), so it uses the bundled engines. Otherwise it falls back to the `LOCAL_FILE_CONVERTER_*` overrides and `PATH`.
 
 Each new converter adds its MCP tools in its own `#[tool_router]` block, combined in `JustConvertServer::new`.
 
 ## Consequences
 
-Agents get the same safety guarantees as the UI: originals are never modified, and output is staged and validated. Jobs started by an agent do not appear in the desktop job list in this version. Packaging the binary with the installer and publishing it to the MCP Registry are separate follow-up decisions.
+Agents get the same safety guarantees as the UI: originals are never modified, and output is staged and validated. Jobs started by an agent do not appear in the desktop job list in this version.
+
+Distribution:
+
+- Each release attaches `just-convert-<version>.mcpb`, a small MCP Bundle whose Node launcher finds the installed app (standard locations, or a configured path) and runs it with `--mcp`. Embedding the app and its engines would make the bundle about 1.5 GB.
+- The release workflow publishes `server.json` to the official MCP Registry as `io.github.<owner>/just-convert`, using GitHub OIDC, so no credentials are stored.
+- Release builds smoke-test `--mcp` on every platform with all engines ready.

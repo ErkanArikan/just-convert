@@ -79,27 +79,31 @@ Built with Tauri 2, Rust, React, TypeScript, and pnpm.
 
 ## AI Assistant Integration (MCP)
 
-`just-convert-mcp` is an optional headless [Model Context Protocol](https://modelcontextprotocol.io) server that exposes the converters to AI assistants such as Claude, Cursor, VS Code, Codex, and Gemini CLI. It runs locally over stdio and opens no network port; files never leave the machine. Each request goes through the same validated job queue as the desktop app.
+Just Convert is also a local [Model Context Protocol](https://modelcontextprotocol.io) server, so AI assistants such as Claude, Cursor, VS Code, Codex, and Gemini CLI can convert files with it. The installed app is the server: running it with `--mcp` serves MCP over stdio instead of opening a window, using the same bundled engines and job queue as the desktop app. It opens no network port, and files never leave the machine.
 
-Build it with:
+- **Claude Desktop:** install `just-convert-<version>.mcpb` from the release page. It is a small launcher that finds the installed app.
+- **MCP Registry:** published as `io.github.ErkanArikan/just-convert` with every release.
+- **Any other client:** add the app executable with the `--mcp` argument:
 
-```sh
-cargo build --release --features mcp --bin just-convert-mcp --manifest-path src-tauri/Cargo.toml
-```
-
-Then register the binary with your client. Most clients accept this JSON:
+| Platform       | Command                                                      |
+| -------------- | ------------------------------------------------------------ |
+| macOS          | `/Applications/Just Convert.app/Contents/MacOS/just-convert` |
+| Windows        | `%LOCALAPPDATA%\Just Convert\just-convert.exe`               |
+| Linux (`.deb`) | `/usr/bin/just-convert`                                      |
+| Linux AppImage | the `.AppImage` file itself                                  |
 
 ```json
 {
   "mcpServers": {
-    "just-convert": { "command": "/absolute/path/to/just-convert-mcp" }
+    "just-convert": {
+      "command": "/Applications/Just Convert.app/Contents/MacOS/just-convert",
+      "args": ["--mcp"]
+    }
   }
 }
 ```
 
-For Claude Code: `claude mcp add just-convert -- /absolute/path/to/just-convert-mcp`.
-
-Engines are found the same way as the desktop app: next to the executable under `vendor/`, through the `LOCAL_FILE_CONVERTER_*` overrides, or on `PATH`. Call `list_converters` to see what is ready. See [ADR-012](docs/architecture/ADR-012-mcp-server.md).
+For Claude Code: `claude mcp add just-convert -- "/Applications/Just Convert.app/Contents/MacOS/just-convert" --mcp`. Call `list_converters` to see what is ready. See [ADR-012](docs/architecture/ADR-012-mcp-server.md).
 
 ## Continuous Integration and Releases
 
