@@ -6,6 +6,11 @@
       "../vendor/whisper/": "vendor/whisper/",
       "../vendor/tesseract/": "vendor/tesseract/",
       "../vendor/image-ai/": "vendor/image-ai/"
+    },
+    "windows": {
+      "nsis": {
+        "compression": "zlib"
+      }
     }
   }
 }
