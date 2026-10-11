@@ -46,3 +46,8 @@ pub fn delete_entries_permanently(
 ) -> Result<FileOperationResult, String> {
     file_manager::delete_entries_permanently(&paths, confirmed)
 }
+
+#[tauri::command]
+pub fn read_text_file(path: String) -> Result<String, String> {
+    file_manager::read_text_file(&path)
+}

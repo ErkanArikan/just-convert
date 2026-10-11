@@ -50,7 +50,10 @@ fn is_hidden(name: &str, metadata: &fs::Metadata) -> bool {
     }
 
     #[cfg(not(target_os = "windows"))]
-    false
+    {
+        let _ = metadata;
+        false
+    }
 }
 
 fn entry_from_path(path: PathBuf) -> FileResult<FileEntry> {
@@ -266,6 +269,27 @@ pub fn delete_entries_permanently(
         affected_paths.push(path.display().to_string());
     }
     Ok(FileOperationResult { affected_paths })
+}
+
+const MAX_TEXT_FILE_BYTES: u64 = 200_000;
+
+/// Reads a small UTF-8 text file (.txt or .md) for use as text input.
+pub fn read_text_file(path: &str) -> Result<String, String> {
+    let path = Path::new(path);
+    let extension = path
+        .extension()
+        .and_then(|value| value.to_str())
+        .map(str::to_ascii_lowercase);
+    if !path.is_absolute() || !matches!(extension.as_deref(), Some("txt" | "md")) {
+        return Err("Choose an absolute path to a .txt or .md file".into());
+    }
+    let size = fs::metadata(path)
+        .map_err(|error| format!("The file could not be read: {error}"))?
+        .len();
+    if size > MAX_TEXT_FILE_BYTES {
+        return Err("The text file is too large to read aloud".into());
+    }
+    fs::read_to_string(path).map_err(|_| "The file is not valid UTF-8 text".into())
 }
 
 #[cfg(test)]

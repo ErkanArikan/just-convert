@@ -1,0 +1,139 @@
+{
+  "component": "sherpa-onnx",
+  "version": "1.13.8 (offline TTS runtime); Piper voices en_US-ljspeech-medium and tr_TR-fettah-medium, int8",
+  "licenseIdentifier": "GPL-3.0-or-later (the TTS executable as built links eSpeak NG), Apache-2.0 (sherpa-onnx source), MIT (ONNX Runtime)",
+  "bundled": true,
+  "sourceUrl": "https://github.com/k2-fsa/sherpa-onnx/releases/tag/v1.13.8",
+  "downloadDate": "2026-10-10",
+  "license_file": "docs/licenses/tts-LICENSE.txt",
+  "notes": "The sherpa-onnx offline TTS executable runs the Piper VITS voices as a separate process. Piper's own 2023 binaries are x86-64 only on macOS and the maintained piper1-gpl project ships only Python wheels, so the voices are run by sherpa-onnx instead. The voice archives come from the k2-fsa tts-models release (Piper voices converted with tokens and eSpeak NG data). Voices: en_US-ljspeech (public domain dataset) and tr_TR-fettah (CC0 dataset, fine-tuned from the lessac checkpoint). The offline TTS executable statically links eSpeak NG, so it is distributed under GPL-3.0-or-later, like the GPL FFmpeg build; the app only starts it as a separate process. Corresponding source: https://github.com/k2-fsa/sherpa-onnx/tree/v1.13.8 and https://github.com/espeak-ng/espeak-ng.",
+  "platformArchives": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-osx-arm64-shared.tar.bz2",
+      "sha256": "b10e5c7e2c30ea03de9c442655d14860d9edc475c6251d58a8f5f06e913a1d56",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "*/bin/sherpa-onnx-offline-tts",
+          "to": "vendor/sherpa-onnx/bin/sherpa-onnx-offline-tts"
+        },
+        {
+          "from": "*/lib",
+          "to": "vendor/sherpa-onnx/lib"
+        }
+      ]
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-osx-x64-shared.tar.bz2",
+      "sha256": "54aad64acee9d2d596535a6080d6f22602a720af5460e1d50461b1e1b06bee40",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "*/bin/sherpa-onnx-offline-tts",
+          "to": "vendor/sherpa-onnx/bin/sherpa-onnx-offline-tts"
+        },
+        {
+          "from": "*/lib",
+          "to": "vendor/sherpa-onnx/lib"
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-linux-x64-shared.tar.bz2",
+      "sha256": "c0bdb7907d3a74bba1d55d22bf4d9fa75586cf1530614ebe88a27b9118e015c4",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "*/bin/sherpa-onnx-offline-tts",
+          "to": "vendor/sherpa-onnx/bin/sherpa-onnx-offline-tts"
+        },
+        {
+          "from": "*/lib",
+          "to": "vendor/sherpa-onnx/lib"
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-linux-aarch64-shared-cpu.tar.bz2",
+      "sha256": "4e3734f82bc1379fd91f219f5869c7e9d03b7a4f7561907d8abca4849c51a789",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "*/bin/sherpa-onnx-offline-tts",
+          "to": "vendor/sherpa-onnx/bin/sherpa-onnx-offline-tts"
+        },
+        {
+          "from": "*/lib",
+          "to": "vendor/sherpa-onnx/lib"
+        }
+      ]
+    },
+    {
+      "platform": "win32",
+      "arch": "x64",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-win-x64-shared-MD-Release.tar.bz2",
+      "sha256": "3e971a04b2e0ba4dfa53d381a006367ce8c9f5f09b4ae00043e9845c2baded22",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "*/bin/sherpa-onnx-offline-tts.exe",
+          "to": "vendor/sherpa-onnx/bin/sherpa-onnx-offline-tts.exe"
+        },
+        {
+          "from": "*/bin/onnxruntime.dll",
+          "to": "vendor/sherpa-onnx/bin/onnxruntime.dll"
+        },
+        {
+          "from": "*/bin/onnxruntime_providers_shared.dll",
+          "to": "vendor/sherpa-onnx/bin/onnxruntime_providers_shared.dll"
+        }
+      ]
+    },
+    {
+      "platform": "any",
+      "arch": "any",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-ljspeech-medium-int8.tar.bz2",
+      "sha256": "24dc3bd77dd48c291e52c297878d3437c9492f245d823d7f6a06c4bbb67f4b6b",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "*/en_US-ljspeech-medium.onnx",
+          "to": "vendor/tts/voices/en/model.onnx"
+        },
+        {
+          "from": "*/tokens.txt",
+          "to": "vendor/tts/voices/en/tokens.txt"
+        },
+        {
+          "from": "*/espeak-ng-data",
+          "to": "vendor/tts/espeak-ng-data"
+        }
+      ]
+    },
+    {
+      "platform": "any",
+      "arch": "any",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-tr_TR-fettah-medium-int8.tar.bz2",
+      "sha256": "4374bfdabb88ada0f3edf9bd46eacf1c5391a8a93bdce364196495891e5bc323",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "*/tr_TR-fettah-medium.onnx",
+          "to": "vendor/tts/voices/tr/model.onnx"
+        },
+        {
+          "from": "*/tokens.txt",
+          "to": "vendor/tts/voices/tr/tokens.txt"
+        }
+      ]
+    }
+  ]
+}

@@ -22,5 +22,59 @@
     "directory": "docs/licenses/pdfium/",
     "packageLicenseSha256": "8854f4388f1ca13b3ad9baa42e95f5546b4c0b17109c159256d3eca7be39b09b",
     "notes": "The complete licenses directory from the release archive is reproduced verbatim alongside the package license."
-  }
+  },
+  "platformArchives": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7961/pdfium-mac-arm64.tgz",
+      "sha256": "1193a771e0bd934530afa3df73a0d44551d8f4078442e290054e6dd38ded960f",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "lib/libpdfium.dylib",
+          "to": "vendor/pdfium/bin/libpdfium.dylib"
+        }
+      ]
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7961/pdfium-mac-x64.tgz",
+      "sha256": "17f069d7012ab83898ad5eddebd139b240f05d7411c220775d507a0e3e285536",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "lib/libpdfium.dylib",
+          "to": "vendor/pdfium/bin/libpdfium.dylib"
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7961/pdfium-linux-x64.tgz",
+      "sha256": "019665c8877d46fe65f625f80fd714ab07aac68554b0636acf2a2adf9288adb2",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "lib/libpdfium.so",
+          "to": "vendor/pdfium/bin/libpdfium.so"
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7961/pdfium-linux-arm64.tgz",
+      "sha256": "974107999784a438149605024475d42d80dd306799d90e1af5f6fa63f976455f",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "lib/libpdfium.so",
+          "to": "vendor/pdfium/bin/libpdfium.so"
+        }
+      ]
+    }
+  ]
 }

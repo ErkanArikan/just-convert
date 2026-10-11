@@ -137,9 +137,9 @@ describe("native converter dialogs", () => {
       "C:\\Apps\\LibreOffice\\program\\soffice.exe",
     );
 
-    await expect(chooseDependencyExecutable("libreoffice")).resolves.toContain(
-      "soffice.exe",
-    );
+    await expect(
+      chooseDependencyExecutable("libreoffice", "windows"),
+    ).resolves.toContain("soffice.exe");
     await openExternalUrl(
       "https://www.libreoffice.org/download/download-libreoffice/",
     );
@@ -150,6 +150,17 @@ describe("native converter dialogs", () => {
     );
     expect(mocks.openUrl).toHaveBeenCalledWith(
       "https://www.libreoffice.org/download/download-libreoffice/",
+    );
+  });
+
+  it("does not filter dependency executables by extension on macOS and Linux", async () => {
+    mocks.open.mockResolvedValueOnce("/usr/bin/python3");
+
+    await expect(chooseDependencyExecutable("python", "linux")).resolves.toBe(
+      "/usr/bin/python3",
+    );
+    expect(mocks.open).toHaveBeenLastCalledWith(
+      expect.objectContaining({ filters: undefined }),
     );
   });
 

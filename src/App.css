@@ -66,12 +66,14 @@ body {
   color: var(--text);
 }
 button,
-select {
+select,
+textarea {
   font: inherit;
   outline: none;
 }
 button:focus-visible,
-select:focus-visible {
+select:focus-visible,
+textarea:focus-visible {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
@@ -1339,6 +1341,34 @@ select:focus-visible {
   border-radius: 8px;
   color: var(--text);
   background: var(--surface-muted);
+}
+
+.audio-form textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--surface-muted);
+  resize: vertical;
+}
+
+.tts-text {
+  padding: 0 18px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tts-text p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: right;
+}
+
+.tts-text p.inline-error {
+  color: #dc2626;
+  text-align: left;
 }
 
 .image-batch-options {

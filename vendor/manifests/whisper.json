@@ -1,0 +1,20 @@
+{
+  "component": "whisper.cpp",
+  "version": "whisper-rs 0.16.0 (whisper.cpp), model ggml-base-q5_1 at 5359861",
+  "licenseIdentifier": "MIT",
+  "bundled": true,
+  "sourceUrl": "https://huggingface.co/ggerganov/whisper.cpp/tree/5359861c739e955e79d9a303bcbc70fb988958b1",
+  "downloadDate": "2026-10-10",
+  "license_file": "docs/licenses/whisper-LICENSE.txt",
+  "notes": "whisper.cpp is compiled into the app through the whisper-rs crate. The multilingual base model (5-bit quantized) is bundled; the large-v3-turbo model is downloaded on demand with the SHA-256 pinned in src-tauri/src/application/transcription.rs.",
+  "platformArchives": [
+    {
+      "platform": "any",
+      "arch": "any",
+      "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-base-q5_1.bin",
+      "sha256": "422f1ae452ade6f30a004d7e5c6a43195e4433bc370bf23fac9cc591f01a8898",
+      "kind": "file",
+      "files": [{ "to": "vendor/whisper/ggml-base-q5_1.bin" }]
+    }
+  ]
+}

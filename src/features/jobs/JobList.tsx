@@ -134,6 +134,69 @@ export function JobList({ desktopAvailable }: JobListProps) {
           }),
         };
       }
+      if (job.kind.type === "transcription") {
+        return {
+          output: fileName(job.kind.output_path),
+          detail: t("jobs.transcriptionDetail", {
+            source: fileName(job.kind.input_path),
+            format: job.kind.format.toUpperCase(),
+          }),
+        };
+      }
+      if (job.kind.type === "text_to_speech") {
+        const snippet = job.kind.text.trim().replace(/\s+/g, " ");
+        return {
+          output: fileName(job.kind.output_path),
+          detail: t("jobs.textToSpeechDetail", {
+            text: snippet.length > 48 ? `${snippet.slice(0, 48)}…` : snippet,
+            format: job.kind.format.toUpperCase(),
+          }),
+        };
+      }
+      if (job.kind.type === "image_ai") {
+        return {
+          output: fileName(job.kind.output_path),
+          detail: t(
+            job.kind.operation.type === "upscale"
+              ? "jobs.upscaleDetail"
+              : "jobs.removeBackgroundDetail",
+            {
+              source: fileName(job.kind.input_path),
+              scale:
+                job.kind.operation.type === "upscale"
+                  ? job.kind.operation.scale
+                  : undefined,
+            },
+          ),
+        };
+      }
+      if (job.kind.type === "ocr") {
+        return {
+          output: fileName(job.kind.output_path),
+          detail: t("jobs.ocrDetail", {
+            source: fileName(job.kind.input_path),
+            format: job.kind.format.toUpperCase(),
+          }),
+        };
+      }
+      if (job.kind.type === "video_conversion") {
+        return {
+          output: fileName(job.kind.output_path),
+          detail: t("jobs.videoConversionDetail", {
+            source: fileName(job.kind.input_path),
+            format: job.kind.format.toUpperCase(),
+          }),
+        };
+      }
+      if (job.kind.type === "video_frames") {
+        return {
+          output: fileName(job.kind.output_directory),
+          detail: t("jobs.videoFramesDetail", {
+            source: fileName(job.kind.input_path),
+            seconds: job.kind.interval_seconds,
+          }),
+        };
+      }
       if (job.kind.type === "pdf_to_docx") {
         return {
           output: fileName(job.kind.output_path),

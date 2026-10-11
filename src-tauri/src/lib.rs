@@ -1,6 +1,8 @@
 pub mod application;
 mod commands;
 pub mod domain;
+#[cfg(feature = "mcp")]
+pub mod mcp;
 mod platform;
 
 use std::sync::Arc;
@@ -31,7 +33,15 @@ pub fn run() {
                     qpdf_path: platform::find_qpdf(resource_directory.clone()),
                     pdfium_path: platform::find_pdfium(resource_directory.clone()),
                     dependency_service: Some(Arc::clone(&dependencies)),
-                    pdf_to_docx_worker_path: platform::find_pdf_to_docx_worker(resource_directory),
+                    pdf_to_docx_worker_path: platform::find_pdf_to_docx_worker(
+                        resource_directory.clone(),
+                    ),
+                    whisper_model_path: platform::find_whisper_model(resource_directory.as_deref()),
+                    tessdata_path: platform::find_tessdata(resource_directory.as_deref()),
+                    image_ai_directory: platform::find_image_ai_models(
+                        resource_directory.as_deref(),
+                    ),
+                    tts: platform::find_tts(resource_directory.as_deref()),
                     ..EnginePaths::default()
                 },
             )?);
@@ -45,6 +55,7 @@ pub fn run() {
             commands::dependencies::get_dependency_statuses,
             commands::dependencies::set_dependency_override,
             commands::filesystem::list_directory,
+            commands::filesystem::read_text_file,
             commands::filesystem::create_directory,
             commands::filesystem::rename_entry,
             commands::filesystem::copy_entries,
@@ -62,6 +73,12 @@ pub fn run() {
             commands::jobs::enqueue_office_folder_to_pdf,
             commands::jobs::enqueue_pdf_to_docx,
             commands::jobs::enqueue_pdf_folder_to_docx,
+            commands::jobs::enqueue_transcription,
+            commands::jobs::enqueue_image_ai,
+            commands::jobs::enqueue_text_to_speech,
+            commands::jobs::enqueue_ocr,
+            commands::jobs::enqueue_video_conversion,
+            commands::jobs::enqueue_video_frames,
             commands::jobs::get_pdf_page_count,
             commands::jobs::list_jobs,
             commands::jobs::cancel_job,
