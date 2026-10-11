@@ -18,11 +18,14 @@ use crate::{
         image_converter, job_history,
         job_queue::JobQueue,
         office_converter, pdf_converter, pdf_docx_converter, pdf_image_converter,
+        transcription::{self, Transcription},
+        video_converter::{self, FrameExtraction, VideoConversion},
     },
     domain::job::{
         AudioFormat, ExecutionOutcome, ImageFolderMode, Job, JobError, JobKind, JobStatus,
-        PdfImageFormat, PdfOperation,
+        PdfImageFormat, PdfOperation, SpeechModel, TranscriptFormat, VideoFormat, VideoQuality,
     },
+    platform::PdfToDocxRuntime,
 };
 
 static NEXT_JOB_ID: AtomicU64 = AtomicU64::new(1);
@@ -36,6 +39,7 @@ pub struct EnginePaths {
     pub libreoffice_path: Option<PathBuf>,
     pub python_path: Option<PathBuf>,
     pub pdf_to_docx_worker_path: Option<PathBuf>,
+    pub whisper_model_path: Option<PathBuf>,
     pub dependency_service: Option<Arc<DependencyService>>,
 }
 
@@ -56,6 +60,8 @@ pub struct JobService {
     libreoffice_path: Option<PathBuf>,
     python_path: Option<PathBuf>,
     pdf_to_docx_worker_path: Option<PathBuf>,
+    whisper_model_path: Option<PathBuf>,
+    models_directory: PathBuf,
     dependency_service: Option<Arc<DependencyService>>,
 }
 
@@ -97,6 +103,8 @@ impl JobService {
             libreoffice_path: engines.libreoffice_path,
             python_path: engines.python_path,
             pdf_to_docx_worker_path: engines.pdf_to_docx_worker_path,
+            whisper_model_path: engines.whisper_model_path,
+            models_directory: data_directory.join("models"),
             dependency_service: engines.dependency_service,
         };
         {
@@ -414,16 +422,127 @@ impl JobService {
         self.enqueue_batch_jobs(jobs)
     }
 
+    pub fn enqueue_video(
+        self: &Arc<Self>,
+        input_path: String,
+        output_path: String,
+        format: VideoFormat,
+        quality: VideoQuality,
+        max_height: Option<u32>,
+    ) -> Result<Job, String> {
+        video_converter::validate_conversion(
+            Path::new(&input_path),
+            Path::new(&output_path),
+            format,
+            max_height,
+        )?;
+        if self.ffmpeg_path.is_none() {
+            return Err("The bundled FFmpeg executable is unavailable".into());
+        }
+
+        let now = unix_timestamp();
+        let id = format!("{now}-{}", NEXT_JOB_ID.fetch_add(1, Ordering::Relaxed));
+        let job = Job::queued_video_conversion(
+            id,
+            input_path,
+            output_path,
+            format,
+            quality,
+            max_height,
+            now,
+        );
+        {
+            let mut state = self.state.lock().map_err(|_| "Job queue lock failed")?;
+            state.queue.enqueue(job.clone());
+            state.jobs.push(job.clone());
+            self.persist(&state)?;
+        }
+        self.start_worker_if_needed();
+        Ok(job)
+    }
+
+    pub fn enqueue_video_frames(
+        self: &Arc<Self>,
+        input_path: String,
+        output_directory: String,
+        format: PdfImageFormat,
+        interval_seconds: u32,
+    ) -> Result<Job, String> {
+        video_converter::validate_frames(
+            Path::new(&input_path),
+            Path::new(&output_directory),
+            interval_seconds,
+        )?;
+        if self.ffmpeg_path.is_none() {
+            return Err("The bundled FFmpeg executable is unavailable".into());
+        }
+
+        let now = unix_timestamp();
+        let id = format!("{now}-{}", NEXT_JOB_ID.fetch_add(1, Ordering::Relaxed));
+        let job = Job::queued_video_frames(
+            id,
+            input_path,
+            output_directory,
+            format,
+            interval_seconds,
+            now,
+        );
+        {
+            let mut state = self.state.lock().map_err(|_| "Job queue lock failed")?;
+            state.queue.enqueue(job.clone());
+            state.jobs.push(job.clone());
+            self.persist(&state)?;
+        }
+        self.start_worker_if_needed();
+        Ok(job)
+    }
+
+    pub fn enqueue_transcription(
+        self: &Arc<Self>,
+        input_path: String,
+        output_path: String,
+        format: TranscriptFormat,
+        language: Option<String>,
+        model: SpeechModel,
+    ) -> Result<Job, String> {
+        if self.ffmpeg_path.is_none() {
+            return Err("The bundled FFmpeg executable is unavailable".into());
+        }
+        if model == SpeechModel::Standard && self.whisper_model_path.is_none() {
+            return Err("The bundled speech model is unavailable".into());
+        }
+        let language = language.filter(|value| !value.is_empty() && value != "auto");
+        transcription::validate_request(
+            Path::new(&input_path),
+            Path::new(&output_path),
+            format,
+            language.as_deref(),
+        )?;
+
+        let now = unix_timestamp();
+        let id = format!("{now}-{}", NEXT_JOB_ID.fetch_add(1, Ordering::Relaxed));
+        let job =
+            Job::queued_transcription(id, input_path, output_path, format, language, model, now);
+        {
+            let mut state = self.state.lock().map_err(|_| "Job queue lock failed")?;
+            state.queue.enqueue(job.clone());
+            state.jobs.push(job.clone());
+            self.persist(&state)?;
+        }
+        self.start_worker_if_needed();
+        Ok(job)
+    }
+
     pub fn enqueue_pdf_to_docx(
         self: &Arc<Self>,
         input_path: String,
         output_path: String,
     ) -> Result<Job, String> {
-        let (python_path, worker_path) = self
+        let runtime = self
             .resolved_pdf_to_docx_runtime()
-            .ok_or("Python, PyMuPDF, and pdf2docx are required")?;
-        if !python_path.is_file() || !worker_path.is_file() {
-            return Err("Python PDF-to-Word dependencies are unavailable".into());
+            .ok_or("The PDF-to-Word worker is unavailable")?;
+        if !runtime.is_available() {
+            return Err("The PDF-to-Word worker is unavailable".into());
         }
         pdf_docx_converter::validate_request(Path::new(&input_path), Path::new(&output_path))?;
 
@@ -445,11 +564,11 @@ impl JobService {
         input_directory: String,
         output_directory: String,
     ) -> Result<Vec<Job>, String> {
-        let (python_path, worker_path) = self
+        let runtime = self
             .resolved_pdf_to_docx_runtime()
-            .ok_or("Python, PyMuPDF, and pdf2docx are required")?;
-        if !python_path.is_file() || !worker_path.is_file() {
-            return Err("Python PDF-to-Word dependencies are unavailable".into());
+            .ok_or("The PDF-to-Word worker is unavailable")?;
+        if !runtime.is_available() {
+            return Err("The PDF-to-Word worker is unavailable".into());
         }
         validate_folder_pair(Path::new(&input_directory), Path::new(&output_directory))?;
         let inputs = collect_folder_files(Path::new(&input_directory), |path| {
@@ -749,16 +868,101 @@ impl JobService {
                     |progress| self.update_progress(&job.id, progress),
                 )
             }
+            JobKind::Transcription {
+                input_path,
+                output_path,
+                format,
+                language,
+                model,
+            } => {
+                let ffmpeg_path = self
+                    .ffmpeg_path
+                    .as_deref()
+                    .ok_or("The bundled FFmpeg executable is unavailable")?;
+                // A first-use model download fills the first 30% of the job's progress.
+                let Some(model_path) = transcription::ensure_model(
+                    *model,
+                    self.whisper_model_path.as_deref(),
+                    &self.models_directory,
+                    &cancellation,
+                    |progress| self.update_progress(&job.id, model_download_progress(progress)),
+                )?
+                else {
+                    return Ok(ExecutionOutcome::Cancelled);
+                };
+                transcription::convert(
+                    Transcription {
+                        ffmpeg_path,
+                        model_path: &model_path,
+                        input_path: Path::new(input_path),
+                        output_path: Path::new(output_path),
+                        format: *format,
+                        language: language.as_deref(),
+                        job_id: &job.id,
+                    },
+                    cancellation,
+                    |progress| self.update_progress(&job.id, progress),
+                )
+            }
+            JobKind::VideoConversion {
+                input_path,
+                output_path,
+                format,
+                quality,
+                max_height,
+            } => {
+                let ffmpeg_path = self
+                    .ffmpeg_path
+                    .as_deref()
+                    .ok_or("The bundled FFmpeg executable is unavailable")?;
+                video_converter::convert(
+                    VideoConversion {
+                        ffmpeg_path,
+                        ffprobe_path: self.ffprobe_path.as_deref(),
+                        input_path: Path::new(input_path),
+                        output_path: Path::new(output_path),
+                        format: *format,
+                        quality: *quality,
+                        max_height: *max_height,
+                        job_id: &job.id,
+                    },
+                    cancellation,
+                    |progress| self.update_progress(&job.id, progress),
+                )
+            }
+            JobKind::VideoFrames {
+                input_path,
+                output_directory,
+                format,
+                interval_seconds,
+            } => {
+                let ffmpeg_path = self
+                    .ffmpeg_path
+                    .as_deref()
+                    .ok_or("The bundled FFmpeg executable is unavailable")?;
+                video_converter::extract_frames(
+                    FrameExtraction {
+                        ffmpeg_path,
+                        ffprobe_path: self.ffprobe_path.as_deref(),
+                        input_path: Path::new(input_path),
+                        output_directory: Path::new(output_directory),
+                        format: *format,
+                        interval_seconds: *interval_seconds,
+                        job_id: &job.id,
+                    },
+                    cancellation,
+                    |progress| self.update_progress(&job.id, progress),
+                )
+            }
             JobKind::PdfToDocx {
                 input_path,
                 output_path,
             } => {
-                let (python_path, worker_path) = self
+                let runtime = self
                     .resolved_pdf_to_docx_runtime()
-                    .ok_or("Python, PyMuPDF, and pdf2docx are required")?;
+                    .ok_or("The PDF-to-Word worker is unavailable")?;
                 pdf_docx_converter::convert(
-                    &python_path,
-                    &worker_path,
+                    &runtime,
                     Path::new(input_path),
                     Path::new(output_path),
                     &job.id,
@@ -794,13 +998,11 @@ impl JobService {
             .or_else(|| self.libreoffice_path.clone())
     }
 
-    fn resolved_pdf_to_docx_runtime(&self) -> Option<(PathBuf, PathBuf)> {
+    fn resolved_pdf_to_docx_runtime(&self) -> Option<PdfToDocxRuntime> {
         if let Some(service) = &self.dependency_service {
-            return service
-                .pdf_to_docx_runtime()
-                .map(|runtime| (runtime.python_path, runtime.worker_path));
+            return service.pdf_to_docx_runtime();
         }
-        Some((
+        Some(PdfToDocxRuntime::python(
             self.python_path.clone()?,
             self.pdf_to_docx_worker_path.clone()?,
         ))
@@ -1023,6 +1225,10 @@ fn next_available_directory(
     }
 }
 
+fn model_download_progress(download_percent: u8) -> u8 {
+    (u16::from(download_percent.min(100)) * 3 / 10) as u8
+}
+
 fn is_history_entry(status: &JobStatus) -> bool {
     matches!(
         status,
@@ -1194,6 +1400,13 @@ mod tests {
         assert!(jobs.iter().any(|job| job.id == "active"));
         assert!(!jobs.iter().any(|job| job.id == "failed"));
         assert!(!jobs.iter().any(|job| job.id == "cancelled"));
+    }
+
+    #[test]
+    fn model_download_fills_the_first_thirty_percent() {
+        assert_eq!(model_download_progress(0), 0);
+        assert_eq!(model_download_progress(86), 25);
+        assert_eq!(model_download_progress(100), 30);
     }
 
     #[test]

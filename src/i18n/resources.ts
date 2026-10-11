@@ -77,12 +77,22 @@ export const resources = {
         audio: {
           title: "Convert audio",
           description:
-            "Convert between MP3, WAV, FLAC, AAC, M4A, and OGG with FFmpeg.",
+            "Convert between MP3, WAV, FLAC, AAC, M4A, and OGG, or extract audio from video, with FFmpeg.",
+        },
+        video: {
+          title: "Convert video",
+          description:
+            "Convert or compress video to MP4, WebM, MOV, MKV, or GIF, or extract frames, with FFmpeg.",
+        },
+        speechToText: {
+          title: "Speech to text",
+          description:
+            "Transcribe audio or video to text or subtitles with Whisper, offline.",
         },
         officeToPdf: {
           title: "Office to PDF",
           description:
-            "Convert DOCX, XLSX, and PPTX files using local LibreOffice.",
+            "Convert DOCX, XLSX, and PPTX files with the bundled LibreOffice engine.",
         },
         pdfToDocx: {
           title: "PDF to Word",
@@ -114,8 +124,8 @@ export const resources = {
         },
         input: {
           label: "Source file",
-          help: "MP3, WAV, FLAC, AAC, M4A, or OGG",
-          choose: "Choose audio",
+          help: "MP3, WAV, FLAC, AAC, M4A, OGG, or a video file",
+          choose: "Choose audio or video",
           change: "Change",
         },
         format: {
@@ -142,6 +152,110 @@ export const resources = {
         adding: "Adding…",
         queued: "Conversion added to the local queue.",
         batchQueued: "{{count}} audio files added to the local queue.",
+        viewJobs: "View jobs",
+      },
+      video: {
+        back: "All conversion tools",
+        title: "Convert video",
+        description:
+          "Convert, compress, or turn a video into a GIF, or save still frames. FFmpeg runs entirely on this computer.",
+        task: {
+          label: "What do you want to do?",
+          convert: "Convert or compress",
+          frames: "Extract frames",
+        },
+        input: {
+          label: "Source video",
+          help: "MP4, MOV, MKV, WebM, AVI, M4V, MPG, WMV, FLV, 3GP, or GIF",
+          choose: "Choose video",
+          change: "Change",
+        },
+        format: {
+          label: "Output format",
+          help: "MP4 plays almost everywhere; WebM is smaller for the web; GIF is silent and animated.",
+          mp4: "MP4 (H.264)",
+          webm: "WebM (VP9)",
+          mov: "MOV (H.264)",
+          mkv: "MKV (H.264)",
+          gif: "Animated GIF",
+        },
+        quality: {
+          label: "Size and quality",
+          help: "Smaller files lose more detail.",
+          high: "High quality (largest)",
+          balanced: "Balanced",
+          small: "Small file (smallest)",
+        },
+        height: {
+          label: "Maximum height",
+          help: "Shrinks larger videos to save space; never enlarges.",
+          original: "Keep original size",
+        },
+        interval: {
+          label: "Frame interval",
+          help: "Save one image every this many seconds (1 to 3600).",
+        },
+        imageFormat: {
+          label: "Image format",
+          help: "PNG is lossless; JPEG is smaller.",
+          png: "PNG",
+          jpeg: "JPEG",
+        },
+        output: {
+          label: "Save location",
+          help: "Existing files are never overwritten.",
+          choose: "Choose output",
+        },
+        framesOutput: {
+          label: "Output folder",
+          help: "Frames are saved here as numbered images.",
+          choose: "Choose folder",
+        },
+        localNotice: "Runs locally · Video never leaves this computer",
+        convert: "Add to queue",
+        adding: "Adding…",
+        queued: "Video task added to the local queue.",
+        viewJobs: "View jobs",
+      },
+      speech: {
+        back: "All conversion tools",
+        title: "Speech to text",
+        description:
+          "Transcribe speech from an audio or video file. Whisper runs entirely on this computer.",
+        input: {
+          label: "Source file",
+          help: "Audio or video: MP3, WAV, FLAC, AAC, M4A, OGG, MP4, MOV, MKV, WebM, AVI",
+          choose: "Choose audio or video",
+          change: "Change",
+        },
+        format: {
+          label: "Transcript format",
+          help: "Plain text, SRT or WebVTT subtitles, or JSON with timestamps",
+          txt: "Plain text (.txt)",
+          srt: "SRT subtitles (.srt)",
+          vtt: "WebVTT subtitles (.vtt)",
+          json: "JSON with timestamps (.json)",
+        },
+        language: {
+          label: "Spoken language",
+          help: "Automatic detection works for most recordings.",
+          auto: "Detect automatically",
+        },
+        model: {
+          label: "Accuracy",
+          help: "High accuracy downloads a 574 MB model once, then works offline.",
+          standard: "Standard (built in)",
+          highAccuracy: "High accuracy (574 MB download)",
+        },
+        output: {
+          label: "Save location",
+          help: "Existing files are never overwritten.",
+          choose: "Choose output",
+        },
+        localNotice: "Runs locally · Audio never leaves this computer",
+        convert: "Add to queue",
+        adding: "Adding…",
+        queued: "Transcription added to the local queue.",
         viewJobs: "View jobs",
       },
       images: {
@@ -224,7 +338,7 @@ export const resources = {
         back: "All conversion tools",
         title: "Office to PDF",
         description:
-          "Convert DOCX, XLSX, or PPTX files with your local LibreOffice installation.",
+          "Convert DOCX, XLSX, or PPTX files with the bundled LibreOffice engine.",
         input: "Office document",
         inputHelp: "DOCX, XLSX, or PPTX",
         chooseFile: "Choose document",
@@ -256,7 +370,7 @@ export const resources = {
         back: "All conversion tools",
         title: "PDF to Word",
         description:
-          "Convert a PDF containing selectable text to an editable DOCX using your local Python installation.",
+          "Convert a PDF containing selectable text to an editable DOCX with the bundled PyMuPDF and pdf2docx engine.",
         input: "Source PDF",
         inputHelp: "Digitally generated PDFs with selectable text only",
         chooseFile: "Choose PDF",
@@ -383,6 +497,9 @@ export const resources = {
         pdfToImagesDetail: "{{source}} · {{format}} · {{dpi}} DPI",
         officeToPdfDetail: "{{source}} · Office to PDF",
         pdfToDocxDetail: "{{source}} · PDF to Word",
+        transcriptionDetail: "{{source}} → {{format}} transcript",
+        videoConversionDetail: "{{source}} → {{format}}",
+        videoFramesDetail: "{{source}} → frames every {{seconds}} s",
         status: {
           queued: "Queued",
           running: "Running",
@@ -532,12 +649,22 @@ export const resources = {
         audio: {
           title: "Ses dönüştür",
           description:
-            "FFmpeg ile MP3, WAV, FLAC, AAC, M4A ve OGG biçimleri arasında dönüştürün.",
+            "FFmpeg ile MP3, WAV, FLAC, AAC, M4A ve OGG arasında dönüştürün veya videodan sesi çıkarın.",
+        },
+        video: {
+          title: "Video dönüştür",
+          description:
+            "FFmpeg ile videoyu MP4, WebM, MOV, MKV veya GIF'e dönüştürün ya da sıkıştırın, kareleri çıkarın.",
+        },
+        speechToText: {
+          title: "Konuşmadan metne",
+          description:
+            "Ses veya videoyu Whisper ile çevrimdışı olarak metne ya da altyazıya dönüştürün.",
         },
         officeToPdf: {
           title: "Office'ten PDF'ye",
           description:
-            "Yerel LibreOffice ile DOCX, XLSX ve PPTX dosyalarını dönüştürün.",
+            "Dahil edilen LibreOffice motoruyla DOCX, XLSX ve PPTX dosyalarını dönüştürün.",
         },
         pdfToDocx: {
           title: "PDF'den Word'e",
@@ -569,8 +696,8 @@ export const resources = {
         },
         input: {
           label: "Kaynak dosya",
-          help: "MP3, WAV, FLAC, AAC, M4A veya OGG",
-          choose: "Ses dosyası seç",
+          help: "MP3, WAV, FLAC, AAC, M4A, OGG veya bir video dosyası",
+          choose: "Ses veya video seç",
           change: "Değiştir",
         },
         format: {
@@ -598,6 +725,110 @@ export const resources = {
         queued: "Dönüştürme yerel kuyruğa eklendi.",
         batchQueued: "{{count}} ses dosyası yerel kuyruğa eklendi.",
         viewJobs: "İşlemleri görüntüle",
+      },
+      video: {
+        back: "Tüm dönüştürme araçları",
+        title: "Video dönüştür",
+        description:
+          "Videoyu dönüştürün, sıkıştırın, GIF'e çevirin veya kareleri görsel olarak kaydedin. FFmpeg tamamen bu bilgisayarda çalışır.",
+        task: {
+          label: "Ne yapmak istiyorsunuz?",
+          convert: "Dönüştür veya sıkıştır",
+          frames: "Kareleri çıkar",
+        },
+        input: {
+          label: "Kaynak video",
+          help: "MP4, MOV, MKV, WebM, AVI, M4V, MPG, WMV, FLV, 3GP veya GIF",
+          choose: "Video seç",
+          change: "Değiştir",
+        },
+        format: {
+          label: "Çıktı biçimi",
+          help: "MP4 neredeyse her yerde oynar; WebM web için daha küçüktür; GIF sessiz ve hareketlidir.",
+          mp4: "MP4 (H.264)",
+          webm: "WebM (VP9)",
+          mov: "MOV (H.264)",
+          mkv: "MKV (H.264)",
+          gif: "Hareketli GIF",
+        },
+        quality: {
+          label: "Boyut ve kalite",
+          help: "Daha küçük dosyalar daha fazla ayrıntı kaybeder.",
+          high: "Yüksek kalite (en büyük)",
+          balanced: "Dengeli",
+          small: "Küçük dosya (en küçük)",
+        },
+        height: {
+          label: "En büyük yükseklik",
+          help: "Büyük videoları yer kazanmak için küçültür; asla büyütmez.",
+          original: "Özgün boyutu koru",
+        },
+        interval: {
+          label: "Kare aralığı",
+          help: "Her bu kadar saniyede bir görsel kaydedin (1 ile 3600 arası).",
+        },
+        imageFormat: {
+          label: "Görsel biçimi",
+          help: "PNG kayıpsızdır; JPEG daha küçüktür.",
+          png: "PNG",
+          jpeg: "JPEG",
+        },
+        output: {
+          label: "Kayıt konumu",
+          help: "Mevcut dosyaların üzerine asla yazılmaz.",
+          choose: "Çıktıyı seç",
+        },
+        framesOutput: {
+          label: "Çıktı klasörü",
+          help: "Kareler burada numaralı görseller olarak kaydedilir.",
+          choose: "Klasör seç",
+        },
+        localNotice: "Yerel çalışır · Video bu bilgisayardan çıkmaz",
+        convert: "Kuyruğa ekle",
+        adding: "Ekleniyor…",
+        queued: "Video görevi yerel kuyruğa eklendi.",
+        viewJobs: "İşleri görüntüle",
+      },
+      speech: {
+        back: "Tüm dönüştürme araçları",
+        title: "Konuşmadan metne",
+        description:
+          "Bir ses veya video dosyasındaki konuşmayı yazıya dökün. Whisper tamamen bu bilgisayarda çalışır.",
+        input: {
+          label: "Kaynak dosya",
+          help: "Ses veya video: MP3, WAV, FLAC, AAC, M4A, OGG, MP4, MOV, MKV, WebM, AVI",
+          choose: "Ses veya video seç",
+          change: "Değiştir",
+        },
+        format: {
+          label: "Metin biçimi",
+          help: "Düz metin, SRT veya WebVTT altyazı ya da zaman damgalı JSON",
+          txt: "Düz metin (.txt)",
+          srt: "SRT altyazı (.srt)",
+          vtt: "WebVTT altyazı (.vtt)",
+          json: "Zaman damgalı JSON (.json)",
+        },
+        language: {
+          label: "Konuşma dili",
+          help: "Otomatik algılama çoğu kayıt için çalışır.",
+          auto: "Otomatik algıla",
+        },
+        model: {
+          label: "Doğruluk",
+          help: "Yüksek doğruluk, 574 MB'lık modeli bir kez indirir; ardından çevrimdışı çalışır.",
+          standard: "Standart (dahili)",
+          highAccuracy: "Yüksek doğruluk (574 MB indirme)",
+        },
+        output: {
+          label: "Kayıt konumu",
+          help: "Mevcut dosyaların üzerine asla yazılmaz.",
+          choose: "Çıktıyı seç",
+        },
+        localNotice: "Yerel çalışır · Ses bu bilgisayardan çıkmaz",
+        convert: "Kuyruğa ekle",
+        adding: "Ekleniyor…",
+        queued: "Metne dönüştürme yerel kuyruğa eklendi.",
+        viewJobs: "İşleri görüntüle",
       },
       images: {
         back: "Tüm dönüştürme araçları",
@@ -684,7 +915,7 @@ export const resources = {
         back: "Tüm dönüştürme araçları",
         title: "Office'ten PDF'ye",
         description:
-          "DOCX, XLSX veya PPTX dosyalarını yerel LibreOffice kurulumunuzla dönüştürün.",
+          "DOCX, XLSX veya PPTX dosyalarını dahil edilen LibreOffice motoruyla dönüştürün.",
         input: "Office belgesi",
         inputHelp: "DOCX, XLSX veya PPTX",
         chooseFile: "Belge seç",
@@ -716,7 +947,7 @@ export const resources = {
         back: "Tüm dönüştürme araçları",
         title: "PDF'den Word'e",
         description:
-          "Seçilebilir metin içeren bir PDF'yi yerel Python kurulumunuzla düzenlenebilir DOCX'e dönüştürün.",
+          "Seçilebilir metin içeren bir PDF'yi dahil edilen PyMuPDF ve pdf2docx motoruyla düzenlenebilir DOCX'e dönüştürün.",
         input: "Kaynak PDF",
         inputHelp: "Yalnızca seçilebilir metin içeren dijital PDF'ler",
         chooseFile: "PDF seç",
@@ -844,6 +1075,9 @@ export const resources = {
         pdfToImagesDetail: "{{source}} · {{format}} · {{dpi}} DPI",
         officeToPdfDetail: "{{source}} · Office'ten PDF'ye",
         pdfToDocxDetail: "{{source}} · PDF'den Word'e",
+        transcriptionDetail: "{{source}} → {{format}} metin",
+        videoConversionDetail: "{{source}} → {{format}}",
+        videoFramesDetail: "{{source}} → {{seconds}} sn'de bir kare",
         status: {
           queued: "Kuyrukta",
           running: "Çalışıyor",

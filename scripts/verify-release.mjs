@@ -169,11 +169,16 @@ const workflow = await readFile(
 );
 for (const expected of [
   "contents: read",
-  "lfs: true",
   "pnpm install --frozen-lockfile",
   "pnpm check",
 ]) {
   requireText(workflow, expected, "quality workflow");
+}
+if (
+  !workflow.includes("lfs: true") &&
+  !workflow.includes("./.github/actions/checkout-lfs")
+) {
+  throw new Error("quality workflow must check out Git LFS objects");
 }
 
 const readme = await readFile(await requireFile("README.md"), "utf8");

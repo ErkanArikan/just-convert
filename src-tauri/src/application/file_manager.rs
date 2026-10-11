@@ -50,7 +50,10 @@ fn is_hidden(name: &str, metadata: &fs::Metadata) -> bool {
     }
 
     #[cfg(not(target_os = "windows"))]
-    false
+    {
+        let _ = metadata;
+        false
+    }
 }
 
 fn entry_from_path(path: PathBuf) -> FileResult<FileEntry> {
