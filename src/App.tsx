@@ -10,6 +10,9 @@ import {
 } from "lucide-react";
 import { ConverterGrid } from "./features/converters/ConverterGrid";
 import { AudioConverter } from "./features/converters/AudioConverter";
+import { OcrConverter } from "./features/converters/OcrConverter";
+import { VideoConverter } from "./features/converters/VideoConverter";
+import { SpeechToText } from "./features/converters/SpeechToText";
 import { ImagesToPdf } from "./features/converters/ImagesToPdf";
 import { PdfTools } from "./features/converters/PdfTools";
 import { PdfToImages } from "./features/converters/PdfToImages";
@@ -97,7 +100,10 @@ function App() {
   async function browseDependency(dependency: DependencyId) {
     setDependencyActionError(null);
     try {
-      const path = await chooseDependencyExecutable(dependency);
+      const path = await chooseDependencyExecutable(
+        dependency,
+        bootstrap?.platform ?? "windows",
+      );
       if (!path) return;
       await setDependencyOverride(dependency, path);
       await refreshBootstrap();
@@ -215,6 +221,24 @@ function App() {
           )}
           {activeSection === "convert" && activeTool === "audio" ? (
             <AudioConverter
+              desktopAvailable={isTauri()}
+              onBack={() => setActiveTool(null)}
+              onViewJobs={() => setActiveSection("jobs")}
+            />
+          ) : activeSection === "convert" && activeTool === "ocr" ? (
+            <OcrConverter
+              desktopAvailable={isTauri()}
+              onBack={() => setActiveTool(null)}
+              onViewJobs={() => setActiveSection("jobs")}
+            />
+          ) : activeSection === "convert" && activeTool === "video" ? (
+            <VideoConverter
+              desktopAvailable={isTauri()}
+              onBack={() => setActiveTool(null)}
+              onViewJobs={() => setActiveSection("jobs")}
+            />
+          ) : activeSection === "convert" && activeTool === "speech-to-text" ? (
+            <SpeechToText
               desktopAvailable={isTauri()}
               onBack={() => setActiveTool(null)}
               onViewJobs={() => setActiveSection("jobs")}

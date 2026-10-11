@@ -2,7 +2,7 @@ export type ConverterStatus = "ready" | "external_required" | "planned";
 
 export interface ConverterCapability {
   id: string;
-  category: "document" | "pdf" | "image" | "audio";
+  category: "document" | "pdf" | "image" | "audio" | "video";
   titleKey: string;
   descriptionKey: string;
   engine: string;

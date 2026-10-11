@@ -7,6 +7,7 @@ pub enum ConverterCategory {
     Pdf,
     Image,
     Audio,
+    Video,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]

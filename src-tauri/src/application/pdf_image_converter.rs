@@ -137,7 +137,7 @@ where
     Ok(ExecutionOutcome::Completed)
 }
 
-fn bind_pdfium(path: &Path) -> Result<Pdfium, String> {
+pub(crate) fn bind_pdfium(path: &Path) -> Result<Pdfium, String> {
     match Pdfium::bind_to_library(path) {
         Ok(bindings) => Ok(Pdfium::new(bindings)),
         Err(PdfiumError::PdfiumLibraryBindingsAlreadyInitialized) => Ok(Pdfium::default()),

@@ -1,12 +1,121 @@
 {
   "component": "LibreOffice",
-  "version": "26.8.0.3",
-  "sourceCommit": "bce0998afefdbc355585ca324285661a2170ba77",
+  "version": "26.8.1",
   "licenseIdentifier": "MPL-2.0",
-  "bundled": false,
+  "bundled": true,
   "sourceUrl": "https://www.libreoffice.org/download/",
   "licenseUrl": "https://www.libreoffice.org/licenses/",
-  "detectedDate": "2026-09-11",
-  "testedExecutable": "C:/Program Files/LibreOffice/program/soffice.com",
-  "notes": "Runtime-detected external application. The executable and LibreOffice license files are not redistributed by this project."
+  "notes": "Official Document Foundation builds, embedded unmodified under vendor/libreoffice/ and run headless with an isolated profile per job. LibreOffice's own license files ship inside the embedded copy.",
+  "downloadDate": "2026-10-10",
+  "license_file": "docs/licenses/libreoffice-NOTICE.md",
+  "platformArchives": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "url": "https://download.documentfoundation.org/libreoffice/stable/26.8.1/mac/aarch64/LibreOffice_26.8.1_MacOS_aarch64.dmg",
+      "sha256": "ca074e0b13571efb30a31fc531c5f95e997030637325e5d5de92d67aefdf0dfc",
+      "kind": "dmg",
+      "files": [
+        {
+          "from": "LibreOffice.app",
+          "to": "vendor/libreoffice/LibreOffice.app"
+        }
+      ]
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "url": "https://download.documentfoundation.org/libreoffice/stable/26.8.1/mac/x86_64/LibreOffice_26.8.1_MacOS_x86-64.dmg",
+      "sha256": "4c7464313a529e9074400cbcdc894fc40ac4ef9421ded03b16b5a78d12cb155e",
+      "kind": "dmg",
+      "files": [
+        {
+          "from": "LibreOffice.app",
+          "to": "vendor/libreoffice/LibreOffice.app"
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "url": "https://download.documentfoundation.org/libreoffice/stable/26.8.1/deb/aarch64/LibreOffice_26.8.1_Linux_aarch64_deb.tar.gz",
+      "sha256": "1b069c20dd237f6decad3ea02cb02f39fdf458b03d09c2a9facb7b9b71e6a27a",
+      "kind": "deb-bundle",
+      "files": [
+        {
+          "locate": "program/soffice",
+          "to": "vendor/libreoffice",
+          "prune": [
+            "program/libavmediagtk.so",
+            "program/libavmediaqt6.so",
+            "program/libkf5be1lo.so",
+            "program/libofficebean.so",
+            "program/libvclplug_gtk3_kde5lo.so",
+            "program/libvclplug_gtk4lo.so",
+            "program/libvclplug_kf5lo.so",
+            "program/libvclplug_qt5lo.so",
+            "program/libvclplug_qt6lo.so",
+            "program/lo_kde5filepicker"
+          ]
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "url": "https://download.documentfoundation.org/libreoffice/stable/26.8.1/deb/x86_64/LibreOffice_26.8.1_Linux_x86-64_deb.tar.gz",
+      "sha256": "30903df3b9f61360d9660cd707de48cd2831469114492a5008ed58a0ac77d044",
+      "kind": "deb-bundle",
+      "files": [
+        {
+          "locate": "program/soffice",
+          "to": "vendor/libreoffice",
+          "prune": [
+            "program/libavmediagtk.so",
+            "program/libavmediaqt6.so",
+            "program/libkf5be1lo.so",
+            "program/libofficebean.so",
+            "program/libvclplug_gtk3_kde5lo.so",
+            "program/libvclplug_gtk4lo.so",
+            "program/libvclplug_kf5lo.so",
+            "program/libvclplug_qt5lo.so",
+            "program/libvclplug_qt6lo.so",
+            "program/lo_kde5filepicker"
+          ]
+        }
+      ]
+    },
+    {
+      "platform": "win32",
+      "arch": "x64",
+      "url": "https://download.documentfoundation.org/libreoffice/stable/26.8.1/win/x86_64/LibreOffice_26.8.1_Win_x86-64.msi",
+      "sha256": "c6298b10cfa1748bcbedad94c62ce771e240e5021bfd6d7a967cd571b04b5312",
+      "kind": "msi",
+      "files": [
+        {
+          "locate": "program/soffice.exe",
+          "to": "vendor/libreoffice",
+          "prune": [
+            "help",
+            "readmes",
+            "program/resource",
+            "share/gallery",
+            "share/config/images_*",
+            "share/extensions/nlpsolver",
+            "share/extensions/wiki-publisher",
+            "share/extensions/dict-*/*.aff",
+            "share/extensions/dict-*/*.dic",
+            "share/extensions/dict-*/th_*",
+            "share/extensions/dict-*/thes_*"
+          ],
+          "keep": [
+            "share/config/images_colibre.zip",
+            "share/config/images_colibre_svg.zip",
+            "share/extensions/dict-*/hyph_*"
+          ]
+        }
+      ]
+    }
+  ],
+  "platformNotes": "Linux: optional Qt, KDE, GTK 4, and Java desktop-integration modules are pruned; headless conversion never loads them, and they would otherwise require desktop libraries the AppImage cannot resolve. Windows: UI translations, help, gallery, spelling and thesaurus dictionaries, unused icon themes, and two unused extensions are pruned so the NSIS installer stays under its 2 GB limit; hyphenation patterns are kept because they affect layout."
 }

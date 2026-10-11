@@ -1,35 +1,53 @@
+use std::path::Path;
+
 use crate::{
+    application::{audio_converter, ocr, video_converter},
     domain::converter::{ConverterCapability, ConverterCategory, ConverterStatus},
     platform,
 };
 
 pub fn capabilities() -> Vec<ConverterCapability> {
     capabilities_with_dependencies(
-        platform::find_libreoffice().is_some(),
+        None,
+        platform::find_libreoffice(None).is_some(),
         platform::find_pdf_to_docx_runtime(None).is_some(),
     )
 }
 
 pub fn capabilities_with_dependencies(
+    resource_directory: Option<&Path>,
     libreoffice_ready: bool,
     pdf_to_docx_ready: bool,
 ) -> Vec<ConverterCapability> {
+    let resources = || resource_directory.map(Path::to_path_buf);
     let libreoffice_status = if libreoffice_ready {
         ConverterStatus::Ready
     } else {
         ConverterStatus::ExternalRequired
     };
-    let ffmpeg_status = if platform::find_ffmpeg(None).is_some() {
+    let ffmpeg_status = if platform::find_ffmpeg(resources()).is_some() {
         ConverterStatus::Ready
     } else {
         ConverterStatus::ExternalRequired
     };
-    let qpdf_status = if platform::find_qpdf(None).is_some() {
+    let qpdf_status = if platform::find_qpdf(resources()).is_some() {
         ConverterStatus::Ready
     } else {
         ConverterStatus::ExternalRequired
     };
-    let pdfium_status = if platform::find_pdfium(None).is_some() {
+    let pdfium_status = if platform::find_pdfium(resources()).is_some() {
+        ConverterStatus::Ready
+    } else {
+        ConverterStatus::ExternalRequired
+    };
+    let speech_status = if ffmpeg_status == ConverterStatus::Ready
+        && platform::find_whisper_model(resource_directory).is_some()
+    {
+        ConverterStatus::Ready
+    } else {
+        ConverterStatus::ExternalRequired
+    };
+    let ocr_status = if platform::find_tessdata(resources().as_deref()).is_some() {
         ConverterStatus::Ready
     } else {
         ConverterStatus::ExternalRequired
@@ -47,7 +65,7 @@ pub fn capabilities_with_dependencies(
             "converters.imagesToPdf.title",
             "converters.imagesToPdf.description",
             "Native",
-            ConverterStatus::Ready,
+            qpdf_status.clone(),
             true,
             &["jpg", "jpeg", "png", "webp", "tiff"],
             &["pdf"],
@@ -80,10 +98,43 @@ pub fn capabilities_with_dependencies(
             "converters.audio.title",
             "converters.audio.description",
             "FFmpeg",
-            ffmpeg_status,
+            ffmpeg_status.clone(),
             true,
+            audio_converter::SUPPORTED_INPUTS,
             &["mp3", "wav", "flac", "aac", "m4a", "ogg"],
-            &["mp3", "wav", "flac", "aac", "m4a", "ogg"],
+        ),
+        ConverterCapability::new(
+            "video",
+            ConverterCategory::Video,
+            "converters.video.title",
+            "converters.video.description",
+            "FFmpeg",
+            ffmpeg_status.clone(),
+            true,
+            video_converter::SUPPORTED_INPUTS,
+            &["mp4", "webm", "mov", "mkv", "gif", "png", "jpg"],
+        ),
+        ConverterCapability::new(
+            "ocr",
+            ConverterCategory::Document,
+            "converters.ocr.title",
+            "converters.ocr.description",
+            "Tesseract",
+            ocr_status,
+            true,
+            ocr::SUPPORTED_INPUTS,
+            &["pdf", "txt"],
+        ),
+        ConverterCapability::new(
+            "speech-to-text",
+            ConverterCategory::Audio,
+            "converters.speechToText.title",
+            "converters.speechToText.description",
+            "whisper.cpp",
+            speech_status,
+            true,
+            audio_converter::SUPPORTED_INPUTS,
+            &["txt", "srt", "vtt", "json"],
         ),
         ConverterCapability::new(
             "office-to-pdf",
@@ -92,7 +143,7 @@ pub fn capabilities_with_dependencies(
             "converters.officeToPdf.description",
             "LibreOffice",
             libreoffice_status,
-            false,
+            true,
             &["docx", "xlsx", "pptx"],
             &["pdf"],
         ),
@@ -101,9 +152,9 @@ pub fn capabilities_with_dependencies(
             ConverterCategory::Document,
             "converters.pdfToDocx.title",
             "converters.pdfToDocx.description",
-            "Python · PyMuPDF · pdf2docx",
+            "PyMuPDF · pdf2docx",
             pdf_to_docx_status,
-            false,
+            true,
             &["pdf"],
             &["docx"],
         ),
@@ -123,6 +174,9 @@ mod tests {
             "pdf-tools",
             "pdf-to-images",
             "audio",
+            "video",
+            "ocr",
+            "speech-to-text",
             "office-to-pdf",
             "pdf-to-docx",
         ] {

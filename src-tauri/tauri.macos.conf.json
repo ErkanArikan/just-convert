@@ -1,0 +1,14 @@
+{
+  "bundle": {
+    "targets": ["app"],
+    "resources": {
+      "../vendor/ffmpeg/bin/ffmpeg.exe": null,
+      "../vendor/ffmpeg/bin/ffprobe.exe": null,
+      "../vendor/qpdf/bin/": null,
+      "../vendor/pdfium/bin/": null
+    },
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    }
+  }
+}

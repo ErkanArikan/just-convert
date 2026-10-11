@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.ErkanArikan/just-convert",
+  "title": "Just Convert",
+  "description": "Convert local audio, images, PDFs, and Office files on your own machine. Nothing is uploaded.",
+  "version": "0.1.0",
+  "websiteUrl": "https://github.com/ErkanArikan/just-convert",
+  "repository": {
+    "url": "https://github.com/ErkanArikan/just-convert",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/ErkanArikan/just-convert/releases/download/v0.1.0/just-convert-0.1.0.mcpb",
+      "fileSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
