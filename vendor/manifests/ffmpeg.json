@@ -23,5 +23,94 @@
       "sha256": "19202b23c0043f15ad1b7bce2344f406fd52bd6efd8f995ce02e7392a1cec52f"
     }
   ],
-  "license_file": "docs/licenses/ffmpeg-LICENSE.txt"
+  "license_file": "docs/licenses/ffmpeg-LICENSE.txt",
+  "platformArchives": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "url": "https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2/ffmpeg.zip",
+      "sha256": "c8ed4c4e6978a03c485edbfe4e0a5dc2380f8a30bba5150531b31b094492d924",
+      "kind": "zip",
+      "files": [
+        {
+          "from": "ffmpeg",
+          "to": "vendor/ffmpeg/bin/ffmpeg"
+        }
+      ]
+    },
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "url": "https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2/ffprobe.zip",
+      "sha256": "fcbe839537485eaee7a7a8bc5cbc0f90d53617e80943e8a5b2e31cb851197ea6",
+      "kind": "zip",
+      "files": [
+        {
+          "from": "ffprobe",
+          "to": "vendor/ffmpeg/bin/ffprobe"
+        }
+      ]
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "url": "https://ffmpeg.martin-riedl.de/download/macos/amd64/1789931006_9.0.2/ffmpeg.zip",
+      "sha256": "7c6b4125b191cbf773832dc51f424cf2b6bb7da43007d1e066f95909e47cacd4",
+      "kind": "zip",
+      "files": [
+        {
+          "from": "ffmpeg",
+          "to": "vendor/ffmpeg/bin/ffmpeg"
+        }
+      ]
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "url": "https://ffmpeg.martin-riedl.de/download/macos/amd64/1789931006_9.0.2/ffprobe.zip",
+      "sha256": "2322438ed2f6319a691291b247d09c69dcaa3a982460d1f269a7e1af335cfdfd",
+      "kind": "zip",
+      "files": [
+        {
+          "from": "ffprobe",
+          "to": "vendor/ffmpeg/bin/ffprobe"
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-10-13-04/ffmpeg-n9.0.2-25-g67b60c310b-linuxarm64-gpl-9.0.tar.xz",
+      "sha256": "8f897563d9a39eb5616ab043f29f9018358d1f8c15d4b0d30df0dba71f3a931f",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "*/bin/ffmpeg",
+          "to": "vendor/ffmpeg/bin/ffmpeg"
+        },
+        {
+          "from": "*/bin/ffprobe",
+          "to": "vendor/ffmpeg/bin/ffprobe"
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-10-13-04/ffmpeg-n9.0.2-25-g67b60c310b-linux64-gpl-9.0.tar.xz",
+      "sha256": "7e898ca0a18e8620c0caa9af9a728bc01be006398dd5db5a99d53f14de010a9a",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "*/bin/ffmpeg",
+          "to": "vendor/ffmpeg/bin/ffmpeg"
+        },
+        {
+          "from": "*/bin/ffprobe",
+          "to": "vendor/ffmpeg/bin/ffprobe"
+        }
+      ]
+    }
+  ],
+  "platformNotes": "macOS: martin-riedl.de FFmpeg 9.0.2 static release builds (GPL). Linux: BtbN/FFmpeg-Builds n9.0.2 static GPL builds (autobuild-2026-10-10-13-04). Windows: the gyan.dev build above, stored in Git LFS."
 }

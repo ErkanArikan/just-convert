@@ -134,6 +134,15 @@ export function JobList({ desktopAvailable }: JobListProps) {
           }),
         };
       }
+      if (job.kind.type === "transcription") {
+        return {
+          output: fileName(job.kind.output_path),
+          detail: t("jobs.transcriptionDetail", {
+            source: fileName(job.kind.input_path),
+            format: job.kind.format.toUpperCase(),
+          }),
+        };
+      }
       if (job.kind.type === "pdf_to_docx") {
         return {
           output: fileName(job.kind.output_path),

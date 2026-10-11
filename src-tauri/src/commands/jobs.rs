@@ -4,7 +4,10 @@ use tauri::State;
 
 use crate::{
     application::job_service::JobService,
-    domain::job::{AudioFormat, ImageFolderMode, Job, PdfImageFormat, PdfOperation},
+    domain::job::{
+        AudioFormat, ImageFolderMode, Job, PdfImageFormat, PdfOperation, SpeechModel,
+        TranscriptFormat,
+    },
 };
 
 #[tauri::command]
@@ -115,6 +118,18 @@ pub fn enqueue_pdf_folder_to_docx(
     output_directory: String,
 ) -> Result<Vec<Job>, String> {
     service.enqueue_pdf_folder_to_docx(input_directory, output_directory)
+}
+
+#[tauri::command]
+pub fn enqueue_transcription(
+    service: State<'_, Arc<JobService>>,
+    input_path: String,
+    output_path: String,
+    format: TranscriptFormat,
+    language: Option<String>,
+    model: SpeechModel,
+) -> Result<Job, String> {
+    service.enqueue_transcription(input_path, output_path, format, language, model)
 }
 
 #[tauri::command]

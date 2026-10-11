@@ -60,8 +60,13 @@ impl DependencyService {
         })
     }
 
+    pub fn resource_directory(&self) -> Option<&Path> {
+        self.resource_directory.as_deref()
+    }
+
     pub fn statuses(&self) -> DependencyStatuses {
-        let automatic_libreoffice = platform::find_libreoffice();
+        let automatic_libreoffice = platform::find_libreoffice(self.resource_directory.as_deref());
+        let bundled_worker = platform::find_bundled_pdf_to_docx(self.resource_directory.as_deref());
         let automatic_python = platform::find_python();
         let worker_available =
             platform::find_pdf_to_docx_worker(self.resource_directory.clone()).is_some();
@@ -90,15 +95,21 @@ impl DependencyService {
             .as_deref()
             .filter(|path| path.is_file() && !platform::is_windows_apps_python_alias(path))
             .is_some_and(platform::python_is_usable);
-        let resolved_python = overrides
-            .python
-            .as_ref()
-            .filter(|_| manual_python_eligible)
-            .cloned()
-            .or_else(|| automatic_python.clone());
-        let python_packages_ready = resolved_python
-            .as_deref()
-            .is_some_and(platform::python_has_pdf_to_docx_packages);
+        let using_bundled_worker = overrides.python.is_none() && bundled_worker.is_some();
+        let resolved_python = if using_bundled_worker {
+            bundled_worker.clone()
+        } else {
+            overrides
+                .python
+                .as_ref()
+                .filter(|_| manual_python_eligible)
+                .cloned()
+                .or_else(|| automatic_python.clone())
+        };
+        let python_packages_ready = using_bundled_worker
+            || resolved_python
+                .as_deref()
+                .is_some_and(platform::python_has_pdf_to_docx_packages);
 
         DependencyStatuses {
             libreoffice: DependencyStatus {
@@ -115,11 +126,14 @@ impl DependencyService {
             },
             python: DependencyStatus {
                 id: PYTHON_KEY.into(),
-                automatic_path: path_string(automatic_python.as_deref()),
+                automatic_path: path_string(
+                    bundled_worker.as_deref().or(automatic_python.as_deref()),
+                ),
                 manual_path: path_string(overrides.python.as_deref()),
                 manual_path_valid: manual_python_eligible,
                 resolved_path: path_string(resolved_python.as_deref()),
-                ready: resolved_python.is_some() && python_packages_ready && worker_available,
+                ready: using_bundled_worker
+                    || (resolved_python.is_some() && python_packages_ready && worker_available),
                 issue: if overrides
                     .python
                     .as_deref()
@@ -132,7 +146,7 @@ impl DependencyService {
                     Some("version_check_failed".into())
                 } else if resolved_python.is_some() && !python_packages_ready {
                     Some("packages_missing".into())
-                } else if resolved_python.is_some() && !worker_available {
+                } else if !using_bundled_worker && resolved_python.is_some() && !worker_available {
                     Some("worker_missing".into())
                 } else {
                     None
@@ -150,7 +164,7 @@ impl DependencyService {
             .clone();
         manual
             .filter(|path| is_libreoffice_executable(path))
-            .or_else(platform::find_libreoffice)
+            .or_else(|| platform::find_libreoffice(self.resource_directory.as_deref()))
     }
 
     pub fn pdf_to_docx_runtime(&self) -> Option<PdfToDocxRuntime> {
@@ -160,14 +174,19 @@ impl DependencyService {
             .unwrap_or_else(|error| error.into_inner())
             .python
             .clone();
-        let python_path = manual
-            .filter(|path| path.is_file() && !platform::is_windows_apps_python_alias(path))
-            .or_else(platform::find_python)?;
+        let manual =
+            manual.filter(|path| path.is_file() && !platform::is_windows_apps_python_alias(path));
+        if manual.is_none() {
+            if let Some(executable) =
+                platform::find_bundled_pdf_to_docx(self.resource_directory.as_deref())
+            {
+                return Some(PdfToDocxRuntime::bundled(executable));
+            }
+        }
+        let python_path = manual.or_else(platform::find_python)?;
         let worker_path = platform::find_pdf_to_docx_worker(self.resource_directory.clone())?;
-        platform::python_has_pdf_to_docx_packages(&python_path).then_some(PdfToDocxRuntime {
-            python_path,
-            worker_path,
-        })
+        platform::python_has_pdf_to_docx_packages(&python_path)
+            .then(|| PdfToDocxRuntime::python(python_path, worker_path))
     }
 
     pub fn set_override(&self, dependency: &str, path: Option<PathBuf>) -> Result<(), String> {

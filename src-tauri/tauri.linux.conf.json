@@ -1,0 +1,16 @@
+{
+  "bundle": {
+    "targets": ["deb", "appimage"],
+    "resources": {
+      "../vendor/ffmpeg/bin/ffmpeg.exe": null,
+      "../vendor/ffmpeg/bin/ffprobe.exe": null,
+      "../vendor/qpdf/bin/": null,
+      "../vendor/pdfium/bin/": null
+    },
+    "linux": {
+      "deb": {
+        "depends": ["libnss3"]
+      }
+    }
+  }
+}

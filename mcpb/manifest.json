@@ -1,0 +1,72 @@
+{
+  "manifest_version": "0.3",
+  "name": "just-convert",
+  "display_name": "Just Convert",
+  "version": "0.1.0",
+  "description": "Convert local files on your computer: audio, video, images, PDFs, and Office documents. Nothing is uploaded.",
+  "long_description": "Connects your assistant to the Just Convert desktop app, which converts files entirely on your machine with bundled FFmpeg, qpdf, PDFium, LibreOffice, and a PDF-to-Word engine. Requires the Just Convert app to be installed.",
+  "author": {
+    "name": "Just Convert contributors",
+    "url": "https://github.com/ErkanArikan/just-convert"
+  },
+  "homepage": "https://github.com/ErkanArikan/just-convert",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ErkanArikan/just-convert"
+  },
+  "license": "MIT OR Apache-2.0",
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "server/launcher.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/launcher.mjs"],
+      "env": {
+        "JUST_CONVERT_APP_PATH": "${user_config.app_path}"
+      }
+    }
+  },
+  "user_config": {
+    "app_path": {
+      "type": "string",
+      "title": "Just Convert executable",
+      "description": "Only needed if Just Convert is installed somewhere unusual, or for the Linux AppImage: the path to the app executable or .AppImage file.",
+      "required": false,
+      "default": ""
+    }
+  },
+  "tools": [
+    {
+      "name": "list_converters",
+      "description": "List converters and whether each is ready"
+    },
+    {
+      "name": "convert_audio",
+      "description": "Convert audio between MP3, WAV, FLAC, AAC, M4A, and OGG"
+    },
+    { "name": "images_to_pdf", "description": "Combine images into a PDF" },
+    { "name": "pdf_merge", "description": "Merge PDFs" },
+    { "name": "pdf_split", "description": "Split a PDF into parts" },
+    {
+      "name": "pdf_to_images",
+      "description": "Render PDF pages to PNG or JPEG"
+    },
+    {
+      "name": "office_to_pdf",
+      "description": "Convert DOCX, XLSX, or PPTX to PDF"
+    },
+    {
+      "name": "pdf_to_docx",
+      "description": "Convert a text PDF to an editable DOCX"
+    },
+    {
+      "name": "get_job",
+      "description": "Get a conversion job's status and output"
+    }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"]
+  },
+  "keywords": ["convert", "pdf", "audio", "office", "local", "privacy"]
+}

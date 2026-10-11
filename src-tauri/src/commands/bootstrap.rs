@@ -26,6 +26,7 @@ pub fn get_app_bootstrap(service: State<'_, Arc<DependencyService>>) -> AppBoots
         app_version: env!("CARGO_PKG_VERSION"),
         platform: std::env::consts::OS,
         converters: converter_registry::capabilities_with_dependencies(
+            service.resource_directory(),
             dependencies.libreoffice.ready,
             dependencies.python.ready,
         ),

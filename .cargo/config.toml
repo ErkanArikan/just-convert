@@ -1,0 +1,8 @@
+# whisper.cpp defaults to -march=native, which makes binaries crash on other CPUs. Build a portable
+# x86-64-v3 (AVX2, every x86 CPU since 2013) or baseline ARM64 NEON engine instead.
+[env]
+GGML_NATIVE = "OFF"
+GGML_AVX = "ON"
+GGML_AVX2 = "ON"
+GGML_FMA = "ON"
+GGML_F16C = "ON"

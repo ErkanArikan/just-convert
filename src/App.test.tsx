@@ -82,7 +82,9 @@ describe("App foundation", () => {
     expect(
       screen.getByRole("heading", { name: "Convert audio" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Choose audio" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Choose audio or video" }),
+    ).toBeDisabled();
     expect(screen.getByRole("button", { name: "Add to queue" })).toBeDisabled();
   });
 
