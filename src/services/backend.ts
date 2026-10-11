@@ -10,7 +10,18 @@ import type {
   DirectoryListing,
   FileOperationResult,
 } from "../types/fileManager";
-import type { AudioFormat, ConversionJob, PdfOperation } from "../types/jobs";
+import type {
+  AudioFormat,
+  ConversionJob,
+  ImageAiOperation,
+  OcrFormat,
+  OcrLanguage,
+  PdfOperation,
+  SpeechModel,
+  TranscriptFormat,
+  VideoFormat,
+  VideoQuality,
+} from "../types/jobs";
 
 const browserFallback: AppBootstrap = {
   appVersion: "0.1.0-dev",
@@ -57,8 +68,72 @@ const browserFallback: AppBootstrap = {
       engine: "FFmpeg",
       status: "ready",
       bundled: true,
-      inputExtensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg"],
+      inputExtensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg", "mp4"],
       outputExtensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg"],
+    },
+    {
+      id: "remove-background",
+      category: "image",
+      titleKey: "converters.removeBackground.title",
+      descriptionKey: "converters.removeBackground.description",
+      engine: "U²-Net",
+      status: "ready",
+      bundled: true,
+      inputExtensions: ["png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff"],
+      outputExtensions: ["png"],
+    },
+    {
+      id: "upscale-image",
+      category: "image",
+      titleKey: "converters.upscaleImage.title",
+      descriptionKey: "converters.upscaleImage.description",
+      engine: "Real-ESRGAN",
+      status: "ready",
+      bundled: true,
+      inputExtensions: ["png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff"],
+      outputExtensions: ["png", "jpg"],
+    },
+    {
+      id: "video",
+      category: "video",
+      titleKey: "converters.video.title",
+      descriptionKey: "converters.video.description",
+      engine: "FFmpeg",
+      status: "ready",
+      bundled: true,
+      inputExtensions: ["mp4", "mov", "mkv", "webm", "avi", "m4v", "gif"],
+      outputExtensions: ["mp4", "webm", "mov", "mkv", "gif", "png", "jpg"],
+    },
+    {
+      id: "ocr",
+      category: "document",
+      titleKey: "converters.ocr.title",
+      descriptionKey: "converters.ocr.description",
+      engine: "Tesseract",
+      status: "ready",
+      bundled: true,
+      inputExtensions: [
+        "pdf",
+        "png",
+        "jpg",
+        "jpeg",
+        "tif",
+        "tiff",
+        "bmp",
+        "webp",
+      ],
+      outputExtensions: ["pdf", "txt"],
+    },
+    {
+      id: "speech-to-text",
+      category: "audio",
+      titleKey: "converters.speechToText.title",
+      descriptionKey: "converters.speechToText.description",
+      engine: "whisper.cpp",
+      status: "ready",
+      bundled: true,
+      inputExtensions: ["mp3", "wav", "flac", "m4a", "ogg", "mp4"],
+      outputExtensions: ["txt", "srt", "vtt", "json"],
     },
     {
       id: "office-to-pdf",
@@ -120,17 +195,23 @@ export async function openExternalUrl(url: string): Promise<void> {
 
 export async function chooseDependencyExecutable(
   dependency: DependencyId,
+  platform: string,
 ): Promise<string | null> {
   requireDesktop();
+  // macOS and Linux executables have no extension, so an extension filter would hide them.
+  const filters =
+    platform === "windows"
+      ? [
+          {
+            name: dependency === "libreoffice" ? "soffice.exe" : "python.exe",
+            extensions: ["exe"],
+          },
+        ]
+      : undefined;
   const selected = await open({
     directory: false,
     multiple: false,
-    filters: [
-      {
-        name: dependency === "libreoffice" ? "soffice.exe" : "python.exe",
-        extensions: ["exe"],
-      },
-    ],
+    filters,
   });
   return typeof selected === "string" ? selected : null;
 }
@@ -166,8 +247,21 @@ export async function chooseAudioFile(): Promise<string | null> {
     multiple: false,
     filters: [
       {
-        name: "Audio",
-        extensions: ["mp3", "wav", "flac", "aac", "m4a", "ogg"],
+        name: "Audio and video",
+        extensions: [
+          "mp3",
+          "wav",
+          "flac",
+          "aac",
+          "m4a",
+          "ogg",
+          "mp4",
+          "mov",
+          "mkv",
+          "webm",
+          "avi",
+          "m4v",
+        ],
       },
     ],
   });
@@ -200,6 +294,112 @@ export async function chooseDocxOutput(
 export async function chooseAudioOutput(
   defaultPath: string,
   format: AudioFormat,
+): Promise<string | null> {
+  requireDesktop();
+  const selected = await save({
+    defaultPath,
+    filters: [{ name: format.toUpperCase(), extensions: [format] }],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseImageFile(): Promise<string | null> {
+  requireDesktop();
+  const selected = await open({
+    directory: false,
+    multiple: false,
+    filters: [
+      {
+        name: "Images",
+        extensions: ["png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff"],
+      },
+    ],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseImageOutput(
+  defaultPath: string,
+  extensions: string[],
+): Promise<string | null> {
+  requireDesktop();
+  const selected = await save({
+    defaultPath,
+    filters: [{ name: extensions.join(", ").toUpperCase(), extensions }],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseOcrFile(): Promise<string | null> {
+  requireDesktop();
+  const selected = await open({
+    directory: false,
+    multiple: false,
+    filters: [
+      {
+        name: "PDF and images",
+        extensions: ["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"],
+      },
+    ],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseOcrOutput(
+  defaultPath: string,
+  format: OcrFormat,
+): Promise<string | null> {
+  requireDesktop();
+  const selected = await save({
+    defaultPath,
+    filters: [{ name: format.toUpperCase(), extensions: [format] }],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseVideoFile(): Promise<string | null> {
+  requireDesktop();
+  const selected = await open({
+    directory: false,
+    multiple: false,
+    filters: [
+      {
+        name: "Video",
+        extensions: [
+          "mp4",
+          "mov",
+          "mkv",
+          "webm",
+          "avi",
+          "m4v",
+          "mpg",
+          "mpeg",
+          "wmv",
+          "flv",
+          "3gp",
+          "gif",
+        ],
+      },
+    ],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseVideoOutput(
+  defaultPath: string,
+  format: VideoFormat,
+): Promise<string | null> {
+  requireDesktop();
+  const selected = await save({
+    defaultPath,
+    filters: [{ name: format.toUpperCase(), extensions: [format] }],
+  });
+  return typeof selected === "string" ? selected : null;
+}
+
+export async function chooseTranscriptOutput(
+  defaultPath: string,
+  format: TranscriptFormat,
 ): Promise<string | null> {
   requireDesktop();
   const selected = await save({
@@ -342,6 +542,83 @@ export async function enqueuePdfFolderToDocx(
   return invoke<ConversionJob[]>("enqueue_pdf_folder_to_docx", {
     inputDirectory,
     outputDirectory,
+  });
+}
+
+export async function enqueueImageAi(
+  inputPath: string,
+  outputPath: string,
+  operation: ImageAiOperation,
+): Promise<ConversionJob> {
+  requireDesktop();
+  return invoke<ConversionJob>("enqueue_image_ai", {
+    inputPath,
+    outputPath,
+    operation,
+  });
+}
+
+export async function enqueueOcr(
+  inputPath: string,
+  outputPath: string,
+  format: OcrFormat,
+  languages: OcrLanguage[],
+): Promise<ConversionJob> {
+  requireDesktop();
+  return invoke<ConversionJob>("enqueue_ocr", {
+    inputPath,
+    outputPath,
+    format,
+    languages,
+  });
+}
+
+export async function enqueueVideoConversion(
+  inputPath: string,
+  outputPath: string,
+  format: VideoFormat,
+  quality: VideoQuality,
+  maxHeight: number | null,
+): Promise<ConversionJob> {
+  requireDesktop();
+  return invoke<ConversionJob>("enqueue_video_conversion", {
+    inputPath,
+    outputPath,
+    format,
+    quality,
+    maxHeight,
+  });
+}
+
+export async function enqueueVideoFrames(
+  inputPath: string,
+  outputDirectory: string,
+  format: "png" | "jpeg",
+  intervalSeconds: number,
+): Promise<ConversionJob> {
+  requireDesktop();
+  return invoke<ConversionJob>("enqueue_video_frames", {
+    inputPath,
+    outputDirectory,
+    format,
+    intervalSeconds,
+  });
+}
+
+export async function enqueueTranscription(
+  inputPath: string,
+  outputPath: string,
+  format: TranscriptFormat,
+  language: string | null,
+  model: SpeechModel,
+): Promise<ConversionJob> {
+  requireDesktop();
+  return invoke<ConversionJob>("enqueue_transcription", {
+    inputPath,
+    outputPath,
+    format,
+    language,
+    model,
   });
 }
 

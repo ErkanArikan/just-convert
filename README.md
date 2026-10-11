@@ -1,6 +1,6 @@
 # Just Convert
 
-A local-first desktop file manager and file converter for Windows 10 and Windows 11 x64.
+A local-first desktop file manager and file converter for Windows 10 and 11 x64, macOS 11+, and Linux.
 
 Licensed under your choice of the [MIT or Apache 2.0 license](LICENSE).
 
@@ -8,7 +8,12 @@ Licensed under your choice of the [MIT or Apache 2.0 license](LICENSE).
 
 ### File Conversion
 
-- **Audio** — Convert between MP3, WAV, FLAC, AAC, M4A, and OGG (single file or folder batch)
+- **Audio** — Convert between MP3, WAV, FLAC, AAC, M4A, and OGG, or extract audio from MP4, MOV, MKV, WebM, AVI, and M4V video (single file or folder batch)
+- **Video** — Convert or compress MP4, WebM, MOV, MKV, AVI, and more to MP4, WebM, MOV, MKV, or animated GIF with size presets and a maximum height, or extract still frames every N seconds
+- **Remove background** — Cut out the subject of a photo onto a transparent PNG with a local AI model
+- **Upscale image** — Enlarge photos 2x or 4x and restore detail with Real-ESRGAN, offline
+- **OCR** — Turn scanned PDFs and images (PNG, JPG, TIFF, BMP, WebP) into searchable PDFs or plain text with Tesseract, in English or Turkish, offline
+- **Speech to text** — Transcribe audio or video to text, SRT or WebVTT subtitles, or timestamped JSON with Whisper, offline; an optional high-accuracy model downloads once on request
 - **Images to PDF** — Combine JPG, PNG, WebP, and TIFF images into a single PDF or one PDF per image
 - **PDF to Images** — Render PDF pages to PNG or JPEG at normal (150 DPI) or high (300 DPI) quality
 - **PDF Tools** — Merge, split, reorder, and rotate PDF pages
@@ -23,7 +28,7 @@ Licensed under your choice of the [MIT or Apache 2.0 license](LICENSE).
 
 ### Privacy & Safety
 
-- Fully local — no uploads, no network requests, no telemetry
+- Fully local — no uploads, no telemetry, and no network requests except the optional high-accuracy speech model, which downloads once only if you choose it
 - Originals are never modified; all outputs are staged and validated before saving
 - Output filename collisions resolved automatically with incrementing suffixes
 
@@ -35,8 +40,8 @@ Licensed under your choice of the [MIT or Apache 2.0 license](LICENSE).
 
 ### Dependencies & Settings
 
-- FFmpeg and qpdf bundled — work out of the box
-- LibreOffice and Python detected automatically or configured manually in Settings
+- Every engine is bundled (FFmpeg, qpdf, PDFium, LibreOffice, and the PDF-to-Word worker), so nothing else needs to be installed
+- Engines can be overridden manually in Settings
 - English and Turkish interface
 - Light, dark, and system themes
 
@@ -48,10 +53,11 @@ Licensed under your choice of the [MIT or Apache 2.0 license](LICENSE).
 
 ## Dependencies
 
-- FFmpeg and qpdf are bundled with Just Convert; no separate installation is needed.
-- LibreOffice must be installed separately for Office-to-PDF conversion. Download it from the [official LibreOffice website](https://www.libreoffice.org/download/download-libreoffice/).
-- Python 3.10 or newer, plus the `pymupdf` and `pdf2docx` packages, must be installed separately for PDF-to-Word conversion. Install the packages with `pip install pymupdf pdf2docx`.
-- All other features work out of the box with no additional setup.
+Nothing. Every converter works right after installation, offline, on Windows, macOS, and Linux. FFmpeg, qpdf, PDFium, LibreOffice, and a self-contained PDF-to-Word worker (Python, PyMuPDF, and pdf2docx) ship inside the app. A different LibreOffice or Python can still be selected in Settings.
+
+## macOS and Linux
+
+macOS builds are `.app`/`.dmg` and Linux builds are `.deb`/AppImage, roughly 450–600 MB because LibreOffice is included. These builds are unsigned too, so macOS Gatekeeper warns on first launch. See [ADR-013](docs/architecture/ADR-013-macos-and-linux.md).
 
 ## Windows v1 Distribution
 
@@ -70,12 +76,60 @@ PDF-to-Word uses a separately installed Python runtime with PyMuPDF (AGPL v3 or 
 Built with Tauri 2, Rust, React, TypeScript, and pnpm.
 
 - Install dependencies: `pnpm install`
+- Fetch the engines for your platform (needs [uv](https://docs.astral.sh/uv/) to build the PDF-to-Word worker): `pnpm fetch:engines`. On Linux, also install the [Tauri system dependencies](https://tauri.app/start/prerequisites/#linux).
+- Build installers: `pnpm bundle:windows`, `pnpm bundle:macos`, or `pnpm bundle:linux`
 - Run the browser UI: `pnpm dev`
 - Run the desktop application: `pnpm tauri dev`
 - Run the complete quality gate: `pnpm check`
 
+## AI Assistant Integration (MCP)
+
+Just Convert is also a local [Model Context Protocol](https://modelcontextprotocol.io) server, so AI assistants such as Claude, Cursor, VS Code, Codex, and Gemini CLI can convert files with it. The installed app is the server: running it with `--mcp` serves MCP over stdio instead of opening a window, using the same bundled engines and job queue as the desktop app. It opens no network port, and files never leave the machine.
+
+- **Claude Desktop:** install `just-convert-<version>.mcpb` from the release page. It is a small launcher that finds the installed app.
+- **MCP Registry:** published as `io.github.ErkanArikan/just-convert` with every release.
+- **Any other client:** add the app executable with the `--mcp` argument:
+
+| Platform       | Command                                                      |
+| -------------- | ------------------------------------------------------------ |
+| macOS          | `/Applications/Just Convert.app/Contents/MacOS/just-convert` |
+| Windows        | `%LOCALAPPDATA%\Just Convert\just-convert.exe`               |
+| Linux (`.deb`) | `/usr/bin/just-convert`                                      |
+| Linux AppImage | the `.AppImage` file itself                                  |
+
+```json
+{
+  "mcpServers": {
+    "just-convert": {
+      "command": "/Applications/Just Convert.app/Contents/MacOS/just-convert",
+      "args": ["--mcp"]
+    }
+  }
+}
+```
+
+For Claude Code: `claude mcp add just-convert -- "/Applications/Just Convert.app/Contents/MacOS/just-convert" --mcp`. Call `list_converters` to see what is ready. See [ADR-012](docs/architecture/ADR-012-mcp-server.md).
+
+## Continuous Integration and Releases
+
+- **Quality** (`quality.yml`): `pnpm check` on Windows, macOS, and Ubuntu for every push and pull request.
+- **Engines** (`engines.yml`): checks that every pinned engine download is still available, then fetches the engines and runs the full engine test suite on all three platforms. Runs weekly and on pull requests that touch engines.
+- **Versioning** (`release-please.yml`): commits use [Conventional Commits](https://www.conventionalcommits.org/). On every push to `main`, Release Please keeps a release pull request up to date that bumps the version in `package.json`, `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`, and `src-tauri/tauri.conf.json` and updates `CHANGELOG.md`. Merging it tags the release and starts the installer build.
+- **Release** (`release.yml`): builds the Windows, macOS (Apple silicon and Intel), and Linux (x64 and arm64) installers and tests every bundled engine on each platform. For a Release Please release, it attaches the installers and `SHA256SUMS` and then publishes the release. A manually pushed `v<version>` tag gets a draft release instead. Pull requests that change packaging or engines, and manual runs, build the installers as workflow artifacts without publishing.
+
+Optional repository secrets:
+
+| Secret                                                                      | Effect                                                                                        |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `RELEASE_PLEASE_TOKEN`                                                      | Personal access token so release pull requests also run CI (`GITHUB_TOKEN` cannot trigger it) |
+| `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY` | Sign the macOS app and its engines with a Developer ID certificate and the hardened runtime   |
+| `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`                               | Also notarize and staple the app and DMG                                                      |
+| `WINDOWS_CERTIFICATE`, `WINDOWS_CERTIFICATE_PASSWORD`                       | Sign the Windows executable and installer                                                     |
+
+Without them, builds stay unsigned as described above.
+
 ## Post-v1 Roadmap
 
-Cross-platform support is a possible future roadmap item, not a current commitment. Optional Tesseract OCR for scanned PDFs and parallel queue execution are also deferred until after the Windows v1 release.
+Optional Tesseract OCR for scanned PDFs and parallel queue execution are deferred until after the Windows v1 release.
 
 Architectural decisions are recorded in [`docs/architecture/`](docs/architecture/README.md). Conversion engines must remain behind typed Rust adapters and may not be launched directly by frontend code.

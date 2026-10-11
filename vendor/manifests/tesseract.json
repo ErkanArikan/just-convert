@@ -1,0 +1,66 @@
+{
+  "component": "Tesseract OCR",
+  "version": "Tesseract 5.5.2, Leptonica 1.87.0, tessdata_fast eng and tur at 87416418",
+  "licenseIdentifier": "Apache-2.0 (Tesseract, tessdata_fast), BSD-2-Clause (Leptonica)",
+  "bundled": true,
+  "sourceUrl": "https://github.com/tesseract-ocr/tesseract/tree/5.5.2",
+  "downloadDate": "2026-10-10",
+  "license_file": "docs/licenses/tesseract-LICENSE.txt",
+  "notes": "Tesseract and Leptonica are compiled into the app by the kreuzberg-tesseract crate from the pinned source archives below, which fetch-engines unpacks into vendor/tesseract-build/third_party (TESSERACT_RS_CACHE_DIR in .cargo/config.toml) so the build never downloads unpinned sources. The tessdata_fast English and Turkish models and the PDF font are bundled as resources.",
+  "platformArchives": [
+    {
+      "platform": "any",
+      "arch": "any",
+      "url": "https://github.com/DanBloomberg/leptonica/releases/download/1.87.0/leptonica-1.87.0.tar.gz",
+      "sha256": "c73363397f96eb1295602bf44d708a994ad42046c791bf03ea0505d829bdb6a7",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "*",
+          "to": "vendor/tesseract-build/third_party/leptonica"
+        }
+      ]
+    },
+    {
+      "platform": "any",
+      "arch": "any",
+      "url": "https://github.com/tesseract-ocr/tesseract/archive/refs/tags/5.5.2.tar.gz",
+      "sha256": "6235ea0dae45ea137f59c09320406f5888383741924d98855bd2ce0d16b54f21",
+      "kind": "tar",
+      "files": [
+        {
+          "from": "*",
+          "to": "vendor/tesseract-build/third_party/tesseract"
+        },
+        {
+          "from": "*/tessdata/pdf.ttf",
+          "to": "vendor/tesseract/tessdata/pdf.ttf"
+        }
+      ]
+    },
+    {
+      "platform": "any",
+      "arch": "any",
+      "url": "https://github.com/tesseract-ocr/tessdata_fast/raw/87416418657359cb625c412a48b6e1d6d41c29bd/eng.traineddata",
+      "sha256": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2",
+      "kind": "file",
+      "files": [
+        {
+          "to": "vendor/tesseract/tessdata/eng.traineddata"
+        }
+      ]
+    },
+    {
+      "platform": "any",
+      "arch": "any",
+      "url": "https://github.com/tesseract-ocr/tessdata_fast/raw/87416418657359cb625c412a48b6e1d6d41c29bd/tur.traineddata",
+      "sha256": "7393381111e1152420fc4092cb44eef4237580d21b92bf30d7d221aad192c6b7",
+      "kind": "file",
+      "files": [
+        {
+          "to": "vendor/tesseract/tessdata/tur.traineddata"
+        }
+      ]
+    }
+  ]
+}

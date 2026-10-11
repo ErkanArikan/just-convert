@@ -1,0 +1,36 @@
+{
+  "component": "Image AI models",
+  "version": "U²-Net u2netp (rembg v0.0.0 release) and Real-ESRGAN realesr-general-x4v3 (ONNX export at 899dc1e4); inference by tract 0.23",
+  "licenseIdentifier": "Apache-2.0 (U²-Net), BSD-3-Clause (Real-ESRGAN)",
+  "bundled": true,
+  "sourceUrl": "https://github.com/xuebinqin/U-2-Net",
+  "downloadDate": "2026-10-10",
+  "license_file": "docs/licenses/image-ai-LICENSE.txt",
+  "notes": "Background removal and upscaling run in-process through the tract ONNX engine (pure Rust, no native library). u2netp.onnx is the rembg conversion of the official U²-Net weights. The Real-ESRGAN ONNX is a community export pinned by commit and SHA-256; it was verified bit-identical (max output difference 0) to an export made from the official realesr-general-x4v3.pth (SHA-256 8dc7edb9ac80ccdc30c3a5dca6616509367f05fbc184ad95b731f05bece96292) using the SRVGGNetCompact definition (num_conv=32, upscale=4).",
+  "platformArchives": [
+    {
+      "platform": "any",
+      "arch": "any",
+      "url": "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx",
+      "sha256": "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8",
+      "kind": "file",
+      "files": [
+        {
+          "to": "vendor/image-ai/u2netp.onnx"
+        }
+      ]
+    },
+    {
+      "platform": "any",
+      "arch": "any",
+      "url": "https://huggingface.co/jonathanst29/tinier-upscale-models/resolve/899dc1e4b22bbf1955c2f1739c085edc080cb366/realesr-general-x4v3.onnx",
+      "sha256": "924ebad6532777303582d4ce7811849b88869231a3ae7093e0f21200249df8d5",
+      "kind": "file",
+      "files": [
+        {
+          "to": "vendor/image-ai/realesr-general-x4v3.onnx"
+        }
+      ]
+    }
+  ]
+}
