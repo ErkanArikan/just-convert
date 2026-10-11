@@ -97,7 +97,10 @@ function App() {
   async function browseDependency(dependency: DependencyId) {
     setDependencyActionError(null);
     try {
-      const path = await chooseDependencyExecutable(dependency);
+      const path = await chooseDependencyExecutable(
+        dependency,
+        bootstrap?.platform ?? "windows",
+      );
       if (!path) return;
       await setDependencyOverride(dependency, path);
       await refreshBootstrap();

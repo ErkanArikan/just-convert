@@ -246,7 +246,7 @@ mod tests {
     fn installed_libreoffice_converts_docx_to_valid_pdf() {
         let directory = tempdir().unwrap();
         let libreoffice =
-            platform::find_libreoffice().expect("LibreOffice is required for this smoke test");
+            platform::find_libreoffice(None).expect("LibreOffice is required for this smoke test");
         let qpdf = platform::find_qpdf(None).expect("qpdf is required for this smoke test");
         let html = directory.path().join("office-smoke.html");
         fs::write(

@@ -23,6 +23,7 @@ use crate::{
         AudioFormat, ExecutionOutcome, ImageFolderMode, Job, JobError, JobKind, JobStatus,
         PdfImageFormat, PdfOperation,
     },
+    platform::PdfToDocxRuntime,
 };
 
 static NEXT_JOB_ID: AtomicU64 = AtomicU64::new(1);
@@ -419,11 +420,11 @@ impl JobService {
         input_path: String,
         output_path: String,
     ) -> Result<Job, String> {
-        let (python_path, worker_path) = self
+        let runtime = self
             .resolved_pdf_to_docx_runtime()
-            .ok_or("Python, PyMuPDF, and pdf2docx are required")?;
-        if !python_path.is_file() || !worker_path.is_file() {
-            return Err("Python PDF-to-Word dependencies are unavailable".into());
+            .ok_or("The PDF-to-Word worker is unavailable")?;
+        if !runtime.is_available() {
+            return Err("The PDF-to-Word worker is unavailable".into());
         }
         pdf_docx_converter::validate_request(Path::new(&input_path), Path::new(&output_path))?;
 
@@ -445,11 +446,11 @@ impl JobService {
         input_directory: String,
         output_directory: String,
     ) -> Result<Vec<Job>, String> {
-        let (python_path, worker_path) = self
+        let runtime = self
             .resolved_pdf_to_docx_runtime()
-            .ok_or("Python, PyMuPDF, and pdf2docx are required")?;
-        if !python_path.is_file() || !worker_path.is_file() {
-            return Err("Python PDF-to-Word dependencies are unavailable".into());
+            .ok_or("The PDF-to-Word worker is unavailable")?;
+        if !runtime.is_available() {
+            return Err("The PDF-to-Word worker is unavailable".into());
         }
         validate_folder_pair(Path::new(&input_directory), Path::new(&output_directory))?;
         let inputs = collect_folder_files(Path::new(&input_directory), |path| {
@@ -753,12 +754,11 @@ impl JobService {
                 input_path,
                 output_path,
             } => {
-                let (python_path, worker_path) = self
+                let runtime = self
                     .resolved_pdf_to_docx_runtime()
-                    .ok_or("Python, PyMuPDF, and pdf2docx are required")?;
+                    .ok_or("The PDF-to-Word worker is unavailable")?;
                 pdf_docx_converter::convert(
-                    &python_path,
-                    &worker_path,
+                    &runtime,
                     Path::new(input_path),
                     Path::new(output_path),
                     &job.id,
@@ -794,13 +794,11 @@ impl JobService {
             .or_else(|| self.libreoffice_path.clone())
     }
 
-    fn resolved_pdf_to_docx_runtime(&self) -> Option<(PathBuf, PathBuf)> {
+    fn resolved_pdf_to_docx_runtime(&self) -> Option<PdfToDocxRuntime> {
         if let Some(service) = &self.dependency_service {
-            return service
-                .pdf_to_docx_runtime()
-                .map(|runtime| (runtime.python_path, runtime.worker_path));
+            return service.pdf_to_docx_runtime();
         }
-        Some((
+        Some(PdfToDocxRuntime::python(
             self.python_path.clone()?,
             self.pdf_to_docx_worker_path.clone()?,
         ))

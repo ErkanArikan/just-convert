@@ -11,7 +11,7 @@ use std::{
     time::Duration,
 };
 
-use crate::{domain::job::ExecutionOutcome, platform};
+use crate::{domain::job::ExecutionOutcome, platform::PdfToDocxRuntime};
 
 const PROGRESS_PREFIX: &str = "FILE_CONVERTER_PROGRESS:";
 
@@ -43,10 +43,8 @@ pub fn validate_request(input_path: &Path, output_path: &Path) -> Result<(), Str
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 pub fn convert<F>(
-    python_path: &Path,
-    worker_path: &Path,
+    runtime: &PdfToDocxRuntime,
     input_path: &Path,
     output_path: &Path,
     job_id: &str,
@@ -57,25 +55,21 @@ where
     F: FnMut(u8),
 {
     validate_request(input_path, output_path)?;
-    if !python_path.is_file() {
-        return Err("Python 3.10 or newer could not be found".into());
-    }
-    if !worker_path.is_file() {
-        return Err("The PDF-to-Word worker script could not be found".into());
+    if !runtime.is_available() {
+        return Err("The PDF-to-Word worker could not be found".into());
     }
 
     let staged_path = staged_output_path(output_path, job_id)?;
     let _ = fs::remove_file(&staged_path);
-    let mut child = platform::background_command(python_path)
-        .arg("-B")
-        .arg(worker_path)
+    let mut child = runtime
+        .command()
         .arg(input_path)
         .arg(&staged_path)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|error| format!("Python PDF-to-Word worker could not be started: {error}"))?;
+        .map_err(|error| format!("PDF-to-Word worker could not be started: {error}"))?;
     let stdout = child
         .stdout
         .take()
@@ -235,8 +229,7 @@ mod tests {
 
         let mut progress = Vec::new();
         let outcome = convert(
-            &python,
-            &worker,
+            &PdfToDocxRuntime::python(python, worker),
             &input,
             &output,
             "test",
@@ -251,27 +244,29 @@ mod tests {
         assert_eq!(progress.last(), Some(&100));
     }
 
+    fn write_pdf(path: &Path, text: Option<&str>) {
+        let content = text
+            .map(|text| format!("BT /F1 18 Tf 72 720 Td ({text}) Tj ET"))
+            .unwrap_or_default();
+        let pdf = format!(
+            "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n4 0 obj<</Length {}>>stream\n{content}\nendstream endobj\n5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n",
+            content.len()
+        );
+        fs::write(path, pdf).unwrap();
+    }
+
     #[test]
-    #[ignore = "runs installed Python, PyMuPDF, and pdf2docx"]
-    fn installed_python_worker_converts_selectable_text_pdf_to_docx() {
+    #[ignore = "runs the bundled PDF-to-Word worker or an installed Python with PyMuPDF and pdf2docx"]
+    fn worker_converts_selectable_text_pdf_to_docx() {
         let runtime = platform::find_pdf_to_docx_runtime(None)
-            .expect("Python, PyMuPDF, and pdf2docx are required for this smoke test");
+            .expect("the PDF-to-Word worker is required for this smoke test");
         let directory = tempdir().unwrap();
         let input = directory.path().join("selectable-text.pdf");
         let output = directory.path().join("converted.docx");
-        let generated = platform::background_command(&runtime.python_path)
-            .args([
-                "-c",
-                "import pymupdf, sys; doc=pymupdf.open(); page=doc.new_page(); page.insert_text((72, 72), 'Local PDF to Word smoke test'); doc.save(sys.argv[1]); doc.close()",
-            ])
-            .arg(&input)
-            .status()
-            .unwrap();
-        assert!(generated.success());
+        write_pdf(&input, Some("Local PDF to Word smoke test"));
 
         let outcome = convert(
-            &runtime.python_path,
-            &runtime.worker_path,
+            &runtime,
             &input,
             &output,
             "real-worker",
@@ -285,26 +280,17 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "runs installed Python, PyMuPDF, and pdf2docx"]
-    fn installed_python_worker_rejects_pdf_without_selectable_text() {
+    #[ignore = "runs the bundled PDF-to-Word worker or an installed Python with PyMuPDF and pdf2docx"]
+    fn worker_rejects_pdf_without_selectable_text() {
         let runtime = platform::find_pdf_to_docx_runtime(None)
-            .expect("Python, PyMuPDF, and pdf2docx are required for this smoke test");
+            .expect("the PDF-to-Word worker is required for this smoke test");
         let directory = tempdir().unwrap();
         let input = directory.path().join("image-only.pdf");
         let output = directory.path().join("converted.docx");
-        let generated = platform::background_command(&runtime.python_path)
-            .args([
-                "-c",
-                "import pymupdf, sys; doc=pymupdf.open(); doc.new_page(); doc.save(sys.argv[1]); doc.close()",
-            ])
-            .arg(&input)
-            .status()
-            .unwrap();
-        assert!(generated.success());
+        write_pdf(&input, None);
 
         let error = convert(
-            &runtime.python_path,
-            &runtime.worker_path,
+            &runtime,
             &input,
             &output,
             "image-only",

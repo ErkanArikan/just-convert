@@ -120,17 +120,23 @@ export async function openExternalUrl(url: string): Promise<void> {
 
 export async function chooseDependencyExecutable(
   dependency: DependencyId,
+  platform: string,
 ): Promise<string | null> {
   requireDesktop();
+  // macOS and Linux executables have no extension, so an extension filter would hide them.
+  const filters =
+    platform === "windows"
+      ? [
+          {
+            name: dependency === "libreoffice" ? "soffice.exe" : "python.exe",
+            extensions: ["exe"],
+          },
+        ]
+      : undefined;
   const selected = await open({
     directory: false,
     multiple: false,
-    filters: [
-      {
-        name: dependency === "libreoffice" ? "soffice.exe" : "python.exe",
-        extensions: ["exe"],
-      },
-    ],
+    filters,
   });
   return typeof selected === "string" ? selected : null;
 }

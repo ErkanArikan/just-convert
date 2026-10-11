@@ -1,0 +1,74 @@
+name: Engines
+
+on:
+  pull_request:
+    paths:
+      - "vendor/manifests/**"
+      - "workers/**"
+      - "scripts/fetch-engines.mjs"
+      - "scripts/build-pdf-to-docx-worker.mjs"
+      - "scripts/check-engine-sources.mjs"
+      - "src-tauri/src/application/**"
+      - "src-tauri/src/platform/**"
+      - ".github/workflows/engines.yml"
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: engines-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sources:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/check-engine-sources.mjs
+
+  integration:
+    needs: sources
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/checkout-lfs
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: 0.12.12
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev patchelf libnss3
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/engine-archives
+          key: engine-archives-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vendor/manifests/*.json') }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm fetch:engines
+        env:
+          ENGINE_CACHE_DIR: ${{ runner.temp }}/engine-archives
+      - name: Test every bundled engine
+        run: cargo test --manifest-path src-tauri/Cargo.toml -- --include-ignored

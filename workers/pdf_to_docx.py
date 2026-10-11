@@ -1,6 +1,7 @@
-"""Local PDF-to-DOCX worker executed by an external Python runtime.
+"""Local PDF-to-DOCX worker.
 
-Python, PyMuPDF, and pdf2docx are intentionally not bundled with the app.
+Release builds ship it frozen with PyInstaller (see scripts/build-pdf-to-docx-worker.mjs);
+a user-selected Python runtime with PyMuPDF and pdf2docx can run it directly instead.
 """
 
 from __future__ import annotations

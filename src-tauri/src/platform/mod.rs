@@ -14,10 +14,39 @@ use winreg::{
     RegKey,
 };
 
-#[derive(Clone, Debug)]
+/// The bundled frozen worker runs directly; a Python runtime runs the worker script.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PdfToDocxRuntime {
-    pub python_path: PathBuf,
-    pub worker_path: PathBuf,
+    pub program: PathBuf,
+    pub script: Option<PathBuf>,
+}
+
+impl PdfToDocxRuntime {
+    pub fn python(python_path: PathBuf, worker_path: PathBuf) -> Self {
+        Self {
+            program: python_path,
+            script: Some(worker_path),
+        }
+    }
+
+    pub fn bundled(executable: PathBuf) -> Self {
+        Self {
+            program: executable,
+            script: None,
+        }
+    }
+
+    pub fn is_available(&self) -> bool {
+        self.program.is_file() && self.script.as_deref().is_none_or(Path::is_file)
+    }
+
+    pub(crate) fn command(&self) -> Command {
+        let mut command = background_command(&self.program);
+        if let Some(script) = &self.script {
+            command.arg("-B").arg(script);
+        }
+        command
+    }
 }
 
 #[cfg(target_os = "windows")]
@@ -25,6 +54,7 @@ const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 /// Creates a child process without allocating a visible console window on Windows.
 pub(crate) fn background_command<S: AsRef<OsStr>>(program: S) -> Command {
+    #[cfg_attr(not(target_os = "windows"), allow(unused_mut))]
     let mut command = Command::new(program);
     #[cfg(target_os = "windows")]
     {
@@ -35,14 +65,100 @@ pub(crate) fn background_command<S: AsRef<OsStr>>(program: S) -> Command {
     command
 }
 
+/// Directories searched after `PATH`; apps started from a desktop launcher often get a minimal `PATH`.
+fn well_known_directories() -> Vec<PathBuf> {
+    let mut directories: Vec<PathBuf> = if cfg!(target_os = "macos") {
+        ["/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin"]
+            .into_iter()
+            .map(PathBuf::from)
+            .collect()
+    } else if cfg!(target_os = "linux") {
+        [
+            "/usr/local/bin",
+            "/usr/bin",
+            "/bin",
+            "/snap/bin",
+            "/home/linuxbrew/.linuxbrew/bin",
+        ]
+        .into_iter()
+        .map(PathBuf::from)
+        .collect()
+    } else {
+        Vec::new()
+    };
+    if !cfg!(target_os = "windows") {
+        if let Some(home) = env::var_os("HOME").map(PathBuf::from) {
+            directories.push(home.join(".local/bin"));
+        }
+    }
+    directories
+}
+
+fn search_directories() -> Vec<PathBuf> {
+    let mut directories: Vec<PathBuf> = env::var_os("PATH")
+        .map(|path| env::split_paths(&path).collect())
+        .unwrap_or_default();
+    for directory in well_known_directories() {
+        if !directories.contains(&directory) {
+            directories.push(directory);
+        }
+    }
+    directories
+}
+
 fn find_on_path(file_names: &[&str]) -> Option<PathBuf> {
-    let path = env::var_os("PATH")?;
-    env::split_paths(&path)
+    search_directories()
+        .into_iter()
         .flat_map(|directory| file_names.iter().map(move |name| directory.join(name)))
         .find(|candidate| candidate.is_file())
 }
 
-pub fn find_libreoffice() -> Option<PathBuf> {
+fn bundled_candidates(resource_dir: Option<&Path>, relative: &str) -> Vec<PathBuf> {
+    let mut candidates = Vec::new();
+    if let Some(directory) = resource_dir {
+        candidates.push(directory.join(relative));
+    }
+    candidates.push(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join(relative),
+    );
+    if let Ok(executable) = env::current_exe() {
+        if let Some(directory) = executable.parent() {
+            candidates.push(directory.join(relative));
+        }
+    }
+    candidates
+}
+
+pub fn find_bundled_libreoffice(resource_dir: Option<&Path>) -> Option<PathBuf> {
+    let relative = if cfg!(target_os = "macos") {
+        "vendor/libreoffice/LibreOffice.app/Contents/MacOS/soffice"
+    } else if cfg!(windows) {
+        "vendor/libreoffice/program/soffice.com"
+    } else {
+        "vendor/libreoffice/program/soffice"
+    };
+    bundled_candidates(resource_dir, relative)
+        .into_iter()
+        .find(|candidate| candidate.is_file())
+}
+
+pub fn find_bundled_pdf_to_docx(resource_dir: Option<&Path>) -> Option<PathBuf> {
+    let relative = if cfg!(windows) {
+        "vendor/pdf-to-docx/pdf-to-docx.exe"
+    } else {
+        "vendor/pdf-to-docx/pdf-to-docx"
+    };
+    bundled_candidates(resource_dir, relative)
+        .into_iter()
+        .find(|candidate| candidate.is_file())
+}
+
+pub fn find_libreoffice(resource_dir: Option<&Path>) -> Option<PathBuf> {
+    if let Some(path) = find_bundled_libreoffice(resource_dir) {
+        return Some(path);
+    }
     if let Some(path) = find_on_path(if cfg!(windows) {
         &["soffice.com", "soffice.exe"]
     } else {
@@ -63,12 +179,34 @@ pub fn find_libreoffice() -> Option<PathBuf> {
     ];
 
     #[cfg(target_os = "macos")]
-    let candidates = [PathBuf::from(
-        "/Applications/LibreOffice.app/Contents/MacOS/soffice",
-    )];
+    let candidates = {
+        let mut candidates = vec![PathBuf::from(
+            "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+        )];
+        if let Some(home) = env::var_os("HOME").map(PathBuf::from) {
+            candidates.push(home.join("Applications/LibreOffice.app/Contents/MacOS/soffice"));
+        }
+        candidates
+    };
 
     #[cfg(target_os = "linux")]
-    let candidates: [PathBuf; 0] = [];
+    let candidates = {
+        let mut candidates = vec![PathBuf::from("/usr/lib/libreoffice/program/soffice")];
+        if let Ok(entries) = std::fs::read_dir("/opt") {
+            let mut versioned: Vec<_> = entries
+                .filter_map(Result::ok)
+                .map(|entry| entry.path())
+                .filter(|path| {
+                    path.file_name()
+                        .is_some_and(|name| name.to_string_lossy().starts_with("libreoffice"))
+                })
+                .map(|path| path.join("program/soffice"))
+                .collect();
+            versioned.sort_by(|left, right| right.cmp(left));
+            candidates.extend(versioned);
+        }
+        candidates
+    };
 
     candidates.into_iter().find(|candidate| candidate.is_file())
 }
@@ -239,10 +377,8 @@ pub fn find_python() -> Option<PathBuf> {
 }
 
 fn python_path_candidates(file_names: &[&str]) -> Vec<PathBuf> {
-    let Some(path) = env::var_os("PATH") else {
-        return Vec::new();
-    };
-    env::split_paths(&path)
+    search_directories()
+        .into_iter()
         .flat_map(|directory| file_names.iter().map(move |name| directory.join(name)))
         .filter(|candidate| candidate.is_file())
         .collect()
@@ -279,12 +415,13 @@ pub fn find_pdf_to_docx_worker(resource_dir: Option<PathBuf>) -> Option<PathBuf>
 }
 
 pub fn find_pdf_to_docx_runtime(resource_dir: Option<PathBuf>) -> Option<PdfToDocxRuntime> {
+    if let Some(executable) = find_bundled_pdf_to_docx(resource_dir.as_deref()) {
+        return Some(PdfToDocxRuntime::bundled(executable));
+    }
     let python_path = find_python()?;
     let worker_path = find_pdf_to_docx_worker(resource_dir)?;
-    python_has_pdf_to_docx_packages(&python_path).then_some(PdfToDocxRuntime {
-        python_path,
-        worker_path,
-    })
+    python_has_pdf_to_docx_packages(&python_path)
+        .then(|| PdfToDocxRuntime::python(python_path, worker_path))
 }
 
 fn bundled_ffmpeg_file(tool: &str) -> String {
@@ -403,7 +540,7 @@ mod tests {
 
     #[test]
     fn libreoffice_detection_never_returns_a_missing_file() {
-        if let Some(path) = find_libreoffice() {
+        if let Some(path) = find_libreoffice(None) {
             assert!(path.is_file());
         }
     }
@@ -441,6 +578,17 @@ mod tests {
     fn pdf_to_docx_worker_is_present_in_the_source_tree() {
         let path = find_pdf_to_docx_worker(None).expect("the worker script should be present");
         assert!(path.is_file());
+    }
+
+    #[test]
+    fn package_manager_directories_are_searched_after_path() {
+        let directories = search_directories();
+        for directory in well_known_directories() {
+            assert!(directories.contains(&directory));
+        }
+        if cfg!(target_os = "macos") {
+            assert!(directories.contains(&PathBuf::from("/opt/homebrew/bin")));
+        }
     }
 
     #[test]

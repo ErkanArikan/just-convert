@@ -58,11 +58,82 @@
   "license_files": [
     {
       "path": "docs/licenses/qpdf-LICENSE.txt",
-      "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
     },
     {
       "path": "docs/licenses/qpdf-NOTICE.md",
-      "sha256": "ce1c6342adcf83c561f42333087969476c42510018a88a3c90d60a698791a94c"
+      "sha256": "b207f65a9e5491195ded63b2941199b19a4d30148871f2742c88eae7bfc513a6"
     }
-  ]
+  ],
+  "platformArchives": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "url": "https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2-bin-macos-arm64.zip",
+      "sha256": "62e46987a30ea167cbc530ccb22690aec3d8c812ed09979a941bcee92e504b79",
+      "kind": "zip",
+      "files": [
+        {
+          "from": "bin/qpdf",
+          "to": "vendor/qpdf/bin/qpdf"
+        },
+        {
+          "from": "lib/libqpdf.30.dylib",
+          "to": "vendor/qpdf/lib/libqpdf.30.dylib"
+        }
+      ]
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "url": "https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2-bin-macos-x86_64.zip",
+      "sha256": "dd3b01f4414d198529bb0f13bba59c2f016a328bb3506695087a96fb80fc1481",
+      "kind": "zip",
+      "files": [
+        {
+          "from": "bin/qpdf",
+          "to": "vendor/qpdf/bin/qpdf"
+        },
+        {
+          "from": "lib/libqpdf.30.dylib",
+          "to": "vendor/qpdf/lib/libqpdf.30.dylib"
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "url": "https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2-bin-linux-aarch64.zip",
+      "sha256": "8fd9d009eb0838398180a603f2cf76531e5c68a4ecc8847598e0a1ccb1d3b600",
+      "kind": "zip",
+      "files": [
+        {
+          "from": "bin/qpdf",
+          "to": "vendor/qpdf/bin/qpdf"
+        },
+        {
+          "from": "lib",
+          "to": "vendor/qpdf/lib"
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "url": "https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2-bin-linux-x86_64.zip",
+      "sha256": "db367d897829f22c4198ce1094143c9d467bd6ee7dfabc44ba6f02056b24f8b1",
+      "kind": "zip",
+      "files": [
+        {
+          "from": "bin/qpdf",
+          "to": "vendor/qpdf/bin/qpdf"
+        },
+        {
+          "from": "lib",
+          "to": "vendor/qpdf/lib"
+        }
+      ]
+    }
+  ],
+  "platformNotes": "macOS and Linux: official qpdf 12.4.2 release binaries. Windows: the build above, stored in Git LFS."
 }

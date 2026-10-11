@@ -1,0 +1,8 @@
+{
+  "bundle": {
+    "resources": {
+      "../vendor/libreoffice/": "vendor/libreoffice/",
+      "../vendor/pdf-to-docx/": "vendor/pdf-to-docx/"
+    }
+  }
+}

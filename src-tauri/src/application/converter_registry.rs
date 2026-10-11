@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::{
     domain::converter::{ConverterCapability, ConverterCategory, ConverterStatus},
     platform,
@@ -5,31 +7,34 @@ use crate::{
 
 pub fn capabilities() -> Vec<ConverterCapability> {
     capabilities_with_dependencies(
-        platform::find_libreoffice().is_some(),
+        None,
+        platform::find_libreoffice(None).is_some(),
         platform::find_pdf_to_docx_runtime(None).is_some(),
     )
 }
 
 pub fn capabilities_with_dependencies(
+    resource_directory: Option<&Path>,
     libreoffice_ready: bool,
     pdf_to_docx_ready: bool,
 ) -> Vec<ConverterCapability> {
+    let resources = || resource_directory.map(Path::to_path_buf);
     let libreoffice_status = if libreoffice_ready {
         ConverterStatus::Ready
     } else {
         ConverterStatus::ExternalRequired
     };
-    let ffmpeg_status = if platform::find_ffmpeg(None).is_some() {
+    let ffmpeg_status = if platform::find_ffmpeg(resources()).is_some() {
         ConverterStatus::Ready
     } else {
         ConverterStatus::ExternalRequired
     };
-    let qpdf_status = if platform::find_qpdf(None).is_some() {
+    let qpdf_status = if platform::find_qpdf(resources()).is_some() {
         ConverterStatus::Ready
     } else {
         ConverterStatus::ExternalRequired
     };
-    let pdfium_status = if platform::find_pdfium(None).is_some() {
+    let pdfium_status = if platform::find_pdfium(resources()).is_some() {
         ConverterStatus::Ready
     } else {
         ConverterStatus::ExternalRequired
@@ -47,7 +52,7 @@ pub fn capabilities_with_dependencies(
             "converters.imagesToPdf.title",
             "converters.imagesToPdf.description",
             "Native",
-            ConverterStatus::Ready,
+            qpdf_status.clone(),
             true,
             &["jpg", "jpeg", "png", "webp", "tiff"],
             &["pdf"],
@@ -92,7 +97,7 @@ pub fn capabilities_with_dependencies(
             "converters.officeToPdf.description",
             "LibreOffice",
             libreoffice_status,
-            false,
+            true,
             &["docx", "xlsx", "pptx"],
             &["pdf"],
         ),
@@ -101,9 +106,9 @@ pub fn capabilities_with_dependencies(
             ConverterCategory::Document,
             "converters.pdfToDocx.title",
             "converters.pdfToDocx.description",
-            "Python · PyMuPDF · pdf2docx",
+            "PyMuPDF · pdf2docx",
             pdf_to_docx_status,
-            false,
+            true,
             &["pdf"],
             &["docx"],
         ),

@@ -82,7 +82,7 @@ export const resources = {
         officeToPdf: {
           title: "Office to PDF",
           description:
-            "Convert DOCX, XLSX, and PPTX files using local LibreOffice.",
+            "Convert DOCX, XLSX, and PPTX files with the bundled LibreOffice engine.",
         },
         pdfToDocx: {
           title: "PDF to Word",
@@ -224,7 +224,7 @@ export const resources = {
         back: "All conversion tools",
         title: "Office to PDF",
         description:
-          "Convert DOCX, XLSX, or PPTX files with your local LibreOffice installation.",
+          "Convert DOCX, XLSX, or PPTX files with the bundled LibreOffice engine.",
         input: "Office document",
         inputHelp: "DOCX, XLSX, or PPTX",
         chooseFile: "Choose document",
@@ -256,7 +256,7 @@ export const resources = {
         back: "All conversion tools",
         title: "PDF to Word",
         description:
-          "Convert a PDF containing selectable text to an editable DOCX using your local Python installation.",
+          "Convert a PDF containing selectable text to an editable DOCX with the bundled PyMuPDF and pdf2docx engine.",
         input: "Source PDF",
         inputHelp: "Digitally generated PDFs with selectable text only",
         chooseFile: "Choose PDF",
@@ -537,7 +537,7 @@ export const resources = {
         officeToPdf: {
           title: "Office'ten PDF'ye",
           description:
-            "Yerel LibreOffice ile DOCX, XLSX ve PPTX dosyalarını dönüştürün.",
+            "Dahil edilen LibreOffice motoruyla DOCX, XLSX ve PPTX dosyalarını dönüştürün.",
         },
         pdfToDocx: {
           title: "PDF'den Word'e",
@@ -684,7 +684,7 @@ export const resources = {
         back: "Tüm dönüştürme araçları",
         title: "Office'ten PDF'ye",
         description:
-          "DOCX, XLSX veya PPTX dosyalarını yerel LibreOffice kurulumunuzla dönüştürün.",
+          "DOCX, XLSX veya PPTX dosyalarını dahil edilen LibreOffice motoruyla dönüştürün.",
         input: "Office belgesi",
         inputHelp: "DOCX, XLSX veya PPTX",
         chooseFile: "Belge seç",
@@ -716,7 +716,7 @@ export const resources = {
         back: "Tüm dönüştürme araçları",
         title: "PDF'den Word'e",
         description:
-          "Seçilebilir metin içeren bir PDF'yi yerel Python kurulumunuzla düzenlenebilir DOCX'e dönüştürün.",
+          "Seçilebilir metin içeren bir PDF'yi dahil edilen PyMuPDF ve pdf2docx motoruyla düzenlenebilir DOCX'e dönüştürün.",
         input: "Kaynak PDF",
         inputHelp: "Yalnızca seçilebilir metin içeren dijital PDF'ler",
         chooseFile: "PDF seç",

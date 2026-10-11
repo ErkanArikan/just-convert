@@ -87,12 +87,15 @@ where
         .ffprobe_path
         .and_then(|path| probe_duration(path, request.input_path));
 
+    let libvorbis =
+        request.format == AudioFormat::Ogg && has_encoder(request.ffmpeg_path, "libvorbis");
     let mut command = platform::background_command(request.ffmpeg_path);
     command
         .args(build_arguments(
             request.input_path,
             &staged_path,
             request.format,
+            libvorbis,
         ))
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -198,16 +201,40 @@ fn staged_output_path(output_path: &Path, job_id: &str) -> Result<PathBuf, Strin
     Ok(parent.join(format!(".{stem}.{job_id}.part.{extension}")))
 }
 
-fn build_arguments(input: &Path, output: &Path, format: AudioFormat) -> Vec<OsString> {
-    let codec = match format {
-        AudioFormat::Mp3 => "libmp3lame",
-        AudioFormat::Wav => "pcm_s16le",
-        AudioFormat::Flac => "flac",
-        AudioFormat::Aac | AudioFormat::M4a => "aac",
-        AudioFormat::Ogg => "libvorbis",
-    };
+// Homebrew and some distro FFmpeg builds lack libvorbis; the built-in encoder is experimental and stereo-only.
+fn codec_arguments(format: AudioFormat, libvorbis: bool) -> &'static [&'static str] {
+    match format {
+        AudioFormat::Mp3 => &["-c:a", "libmp3lame"],
+        AudioFormat::Wav => &["-c:a", "pcm_s16le"],
+        AudioFormat::Flac => &["-c:a", "flac"],
+        AudioFormat::Aac | AudioFormat::M4a => &["-c:a", "aac"],
+        AudioFormat::Ogg if libvorbis => &["-c:a", "libvorbis"],
+        AudioFormat::Ogg => &["-c:a", "vorbis", "-strict", "experimental", "-ac", "2"],
+    }
+}
 
-    [
+fn has_encoder(ffmpeg: &Path, name: &str) -> bool {
+    platform::background_command(ffmpeg)
+        .args(["-hide_banner", "-encoders"])
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .ok()
+        .filter(|output| output.status.success())
+        .is_some_and(|output| {
+            String::from_utf8_lossy(&output.stdout)
+                .lines()
+                .any(|line| line.split_whitespace().nth(1) == Some(name))
+        })
+}
+
+fn build_arguments(
+    input: &Path,
+    output: &Path,
+    format: AudioFormat,
+    libvorbis: bool,
+) -> Vec<OsString> {
+    let mut arguments: Vec<OsString> = [
         OsString::from("-hide_banner"),
         OsString::from("-loglevel"),
         OsString::from("error"),
@@ -218,14 +245,20 @@ fn build_arguments(input: &Path, output: &Path, format: AudioFormat) -> Vec<OsSt
         OsString::from("-map_metadata"),
         OsString::from("0"),
         OsString::from("-vn"),
-        OsString::from("-c:a"),
-        OsString::from(codec),
+    ]
+    .into();
+    arguments.extend(
+        codec_arguments(format, libvorbis)
+            .iter()
+            .map(OsString::from),
+    );
+    arguments.extend([
         OsString::from("-progress"),
         OsString::from("pipe:1"),
         OsString::from("-nostats"),
         output.as_os_str().to_owned(),
-    ]
-    .into()
+    ]);
+    arguments
 }
 
 fn probe_duration(ffprobe: &Path, input: &Path) -> Option<f64> {
@@ -261,6 +294,7 @@ mod tests {
             Path::new("C:/audio/input.wav"),
             Path::new("C:/audio/output.mp3"),
             AudioFormat::Mp3,
+            false,
         );
         let rendered: Vec<_> = args
             .iter()
@@ -282,6 +316,7 @@ mod tests {
             Path::new("C:/audio/input.wav"),
             Path::new("C:/audio/output.m4a"),
             AudioFormat::M4a,
+            false,
         );
         let rendered = args
             .iter()
@@ -292,6 +327,18 @@ mod tests {
         assert_eq!(
             rendered.last().map(String::as_str),
             Some("C:/audio/output.m4a")
+        );
+    }
+
+    #[test]
+    fn ogg_falls_back_to_the_builtin_vorbis_encoder_without_libvorbis() {
+        assert_eq!(
+            codec_arguments(AudioFormat::Ogg, true),
+            ["-c:a", "libvorbis"]
+        );
+        assert_eq!(
+            codec_arguments(AudioFormat::Ogg, false),
+            ["-c:a", "vorbis", "-strict", "experimental", "-ac", "2"]
         );
     }
 
